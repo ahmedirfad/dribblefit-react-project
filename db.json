@@ -1,0 +1,795 @@
+{
+  "users": [
+    {
+      "id": "1764150476280",
+      "username": "Irfad",
+      "email": "ahmedirfad8@gmail.com",
+      "password": "Irfad1416941%",
+      "role": "user",
+      "createdAt": "2025-11-26T09:47:56.280Z",
+      "cart": [],
+      "addresses": [
+        {
+          "name": "Irfad",
+          "phone": "7736919863",
+          "address": "Imad Manzil , Azad Nagar , Chowki",
+          "city": "Kasaragod",
+          "state": "Kerala",
+          "pincode": "671124",
+          "landmark": "Near Daffodil Hills",
+          "isDefault": true
+        },
+        {
+          "name": "Irfad",
+          "phone": "7736919863",
+          "address": "Kinfra Building, Kakkanchery",
+          "city": "Kozhikode",
+          "state": "Kerala",
+          "pincode": "673634",
+          "landmark": "Kinfra Buikding",
+          "isDefault": false
+        }
+      ],
+      "orders": [
+        {
+          "id": "1765203321425",
+          "orderNumber": "ORD-03321425",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-08T14:15:21.425Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "1765171934138",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AJAX ",
+              "total": 0
+            },
+            {
+              "id": "3",
+              "name": "Juventus FC 2025/26 Third Kit",
+              "image": "/images/juv-third1.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "JUVENTUS",
+              "total": 0
+            },
+            {
+              "id": "1765193860288",
+              "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
+              "image": "/images/barca-blue-anthem-jacket.webp",
+              "price": 0,
+              "size": "XL",
+              "quantity": 1,
+              "team": "FC BARCELONA",
+              "total": 0
+            },
+            {
+              "id": "1765193659431",
+              "name": "Germany 2024 Away Jersey",
+              "image": "/images/germany-away.webp",
+              "price": 0,
+              "size": "S",
+              "quantity": 1,
+              "team": "GERMANY",
+              "total": 0
+            }
+          ],
+          "subtotal": 7096,
+          "discount": 0,
+          "total": 7106,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Imad Manzil , Azad Nagar , Chowki",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": "Near Daffodil Hills"
+          },
+          "couponApplied": null,
+          "couponDiscount": 0,
+          "codCharges": 10,
+          "trackingNumber": "TRK724146006",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1765256430527",
+          "orderNumber": "ORD-56430527",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-09T05:00:30.527Z",
+          "status": "Shipped",
+          "items": [
+            {
+              "id": "1765193860288",
+              "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
+              "image": "/images/barca-blue-anthem-jacket.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "FC BARCELONA",
+              "total": 0
+            },
+            {
+              "id": "1765192693317",
+              "name": "Bayern Munich 125th Anniversary Special Edition Jersey",
+              "image": "/images/bayern-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "BAYERN MUNCHEN",
+              "total": 0
+            },
+            {
+              "id": "1765192911382",
+              "name": "Belgium 2024/25 Away Jersey",
+              "image": "/images/belgium-away.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "BELGIUM",
+              "total": 0
+            },
+            {
+              "id": "5",
+              "name": "Mexico De Oro National Kit",
+              "image": "/images/mex-oro-1.jpg",
+              "price": 0,
+              "size": "S",
+              "quantity": 1,
+              "team": "MEXICO",
+              "total": 0
+            },
+            {
+              "id": "3",
+              "name": "Juventus FC 2025/26 Third Kit",
+              "image": "/images/juv-third1.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "JUVENTUS",
+              "total": 0
+            }
+          ],
+          "subtotal": 7995,
+          "discount": 0,
+          "total": 8005,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Kinfra Building, Kakkanchery",
+            "city": "Kozhikode",
+            "state": "Kerala",
+            "pincode": "673634",
+            "landmark": "Kinfra Buikding"
+          },
+          "couponApplied": null,
+          "couponDiscount": 0,
+          "codCharges": 10,
+          "trackingNumber": "TRK826937383",
+          "addressSource": "saved_address"
+        }
+      ],
+      "phone": "7736919863",
+      "fullName": "Ahmed Irfad",
+      "dateOfBirth": "2005-02-05"
+    },
+    {
+      "id": "1764150947274",
+      "username": "Azeem",
+      "email": "azeeym4@gmail.com",
+      "password": "Azeem@2",
+      "role": "user",
+      "createdAt": "2025-11-26T09:55:47.274Z",
+      "cart": [],
+      "addresses": [
+        {
+          "name": "Mohammed Azeem",
+          "phone": "9809221196",
+          "address": "Adkathbayl, Kasaragod.",
+          "city": "Kasaragod",
+          "state": "Kerala",
+          "pincode": "671121",
+          "landmark": "",
+          "isDefault": true
+        }
+      ],
+      "orders": [
+        {
+          "id": "1765256197687",
+          "orderNumber": "ORD-56197687",
+          "userId": "1764150947274",
+          "username": "Azeem",
+          "userEmail": "azeeym4@gmail.com",
+          "date": "2025-12-09T04:56:37.687Z",
+          "status": "Processing",
+          "items": [
+            {
+              "id": "1765194001359",
+              "name": "Al-Nassr FC 2025/26 Home Jersey",
+              "image": "/images/alnassr-home.jpg",
+              "price": 0,
+              "size": "S",
+              "quantity": 1,
+              "team": "AL NASSR",
+              "total": 0
+            },
+            {
+              "id": "1765192525494",
+              "name": "Aston Villa 2025/26 Away Jersey",
+              "image": "/images/ast-away.jpg",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "ASTON VILLA",
+              "total": 0
+            },
+            {
+              "id": "1765193143614",
+              "name": "Liverpool 2025/26 Third Jersey",
+              "image": "/images/liv-third.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "LIVERPOOL",
+              "total": 0
+            },
+            {
+              "id": "1765194218430",
+              "name": "AC Milan 125th Anniversary Special Jersey",
+              "image": "/images/ac-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AC MILAN",
+              "total": 0
+            }
+          ],
+          "subtotal": 5096,
+          "discount": 1019.2,
+          "total": 4076.8,
+          "paymentMethod": "upi",
+          "shippingAddress": {
+            "name": "Mohammed Azeem",
+            "email": "azeeym4@gmail.com",
+            "phone": "9809221196",
+            "address": "Adkathbayl, Kasaragod.",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671121",
+            "landmark": ""
+          },
+          "couponApplied": "DRIBBLEFIT20",
+          "couponDiscount": 1019.2,
+          "codCharges": 0,
+          "trackingNumber": "TRK535234969",
+          "addressSource": "saved_address"
+        }
+      ],
+      "phone": "9809221196",
+      "fullName": "Mohammed Azeem",
+      "dateOfBirth": "2003-10-25",
+      "isBlocked": false,
+      "blockedAt": null,
+      "blockedBy": null
+    },
+    {
+      "id": "1764923078286",
+      "username": "Adil",
+      "email": "adil8@gmail.com",
+      "password": "adil123",
+      "role": "user",
+      "cart": [],
+      "addresses": [
+        {
+          "name": "Adil",
+          "phone": "7994931322",
+          "address": "Kaikamba , Uppala",
+          "city": "Kasaragod",
+          "state": "Kerala",
+          "pincode": "671129",
+          "landmark": "Near Sonkal Masjid",
+          "isDefault": true
+        }
+      ],
+      "orders": [
+        {
+          "id": "1765262460378",
+          "orderNumber": "ORD-62460378",
+          "userId": "1764923078286",
+          "username": "Adil",
+          "userEmail": "adil8@gmail.com",
+          "date": "2025-12-09T06:41:00.378Z",
+          "status": "Shipped",
+          "items": [
+            {
+              "id": "2",
+              "name": "Liverpool 2025/26 Away Jersey",
+              "image": "/images/liv-newaway.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "LIVERPOOL",
+              "total": 0
+            },
+            {
+              "id": "1",
+              "name": "Ac Milan 2025/26 Home Kit",
+              "image": "/images/ac-homr.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AC MILAN",
+              "total": 0
+            },
+            {
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "AS ROMA",
+              "total": 0
+            },
+            {
+              "id": "1765192525494",
+              "name": "Aston Villa 2025/26 Away Jersey",
+              "image": "/images/ast-away.jpg",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "ASTON VILLA",
+              "total": 0
+            },
+            {
+              "id": "1765171934138",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AJAX ",
+              "total": 0
+            },
+            {
+              "id": "1765193336635",
+              "name": "South Korea 2024/25 Home Jersey",
+              "image": "/images/korea-away.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 2,
+              "team": "SOUTH KOREA",
+              "total": 0
+            },
+            {
+              "id": "1765193659431",
+              "name": "Germany 2024/25 Away Jersey",
+              "image": "/images/germany-away.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "GERMANY",
+              "total": 0
+            },
+            {
+              "id": "1765028426181",
+              "name": "Portugal Black Panther Kit",
+              "image": "/images/portugal-60.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "PORTUGAL",
+              "total": 0
+            }
+          ],
+          "subtotal": 9291,
+          "discount": 0,
+          "total": 9301,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Adil",
+            "email": "adil8@gmail.com",
+            "phone": "7994931322",
+            "address": "Kaikamba , Uppala",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671129",
+            "landmark": "Near Sonkal Masjid"
+          },
+          "couponApplied": null,
+          "couponDiscount": 0,
+          "codCharges": 10,
+          "trackingNumber": "TRK434913242",
+          "addressSource": "saved_address"
+        }
+      ],
+      "phone": "7994931322",
+      "fullName": "Abdul Rahman Adil",
+      "dateOfBirth": "2025-03-18",
+      "createdAt": "2025-12-05T08:24:38.286Z"
+    },
+    {
+      "id": "1769999999999",
+      "username": "admin",
+      "email": "admin@dribblefit.com",
+      "password": "Admin@123",
+      "role": "admin",
+      "createdAt": "2025-11-26T09:47:56.280Z",
+      "cart": [],
+      "addresses": [],
+      "orders": [],
+      "phone": "7736919863",
+      "fullName": "CEO DRIBBLEFIT",
+      "dateOfBirth": "2005-02-05"
+    }
+  ],
+  "products": [
+    {
+      "id": "1",
+      "name": "Ac Milan 2025/26 Home Kit",
+      "price": "₹799",
+      "originalPrice": "₹999",
+      "discount": "20% OFF",
+      "image": "/images/ac-homr.webp",
+      "category": "2025-26-season-kits",
+      "team": "AC MILAN",
+      "league": "SERIE A",
+      "description": "Ignite your passion for football with the AC Milan 2025/26 Home Jersey – Flame Edition, a bold new design from Puma that symbolizes the fierce pride and legacy of the Rossoneri. Featuring the legendary red and black stripes infused with a fiery, smoke-textured motif, this jersey captures the unstoppable energy of San Siro.\n\nEngineered for both fans and athletes.",
+      "sizes": [
+        "L",
+        "M",
+        "S",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": true
+    },
+    {
+      "id": "2",
+      "name": "Liverpool 2025/26 Away Jersey",
+      "price": "₹999",
+      "image": "/images/liv-newaway.webp",
+      "category": "2025-26-season-kits",
+      "team": "LIVERPOOL",
+      "description": "Step onto the pitch in style with the Liverpool 2025/26 Away Jersey, designed for true Reds supporters. Featuring a sleek cream base with deep red accents, this kit reflects the club’s rich heritage while embracing modern performance design.\n\nPremium player version with advanced AeroReady technology for maximum breathability and comfort\n\nIconic LFC crest and sponsor details in bold red for a classy, striking look\n\nLightweight, slim-fit design tailored for on-pitch performance\n\nRibbed collar and sleeve detailing for added style and durability",
+      "sizes": [
+        "L",
+        "M",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false,
+      "league": "PREMIER LEAGUE"
+    },
+    {
+      "id": "3",
+      "name": "Juventus FC 2025/26 Third Kit",
+      "price": "₹999",
+      "originalPrice": "₹1,199",
+      "discount": "15% OFF",
+      "image": "/images/juv-third1.webp",
+      "category": "2025-26-season-kits",
+      "team": "JUVENTUS",
+      "league": "SERIE A",
+      "description": "A sleek, stealth-themed third kit in matte black featuring tonal patterns and dark green adidas stripes. Retro Trefoil details give it a premium streetwear vibe.",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "4",
+      "name": "Argentina 2025 Home Kit",
+      "price": "₹1,199",
+      "image": "/images/arg-home.webp",
+      "category": "international-kits",
+      "team": "ARGENTINA",
+      "description": "Celebrate Argentina’s legendary 2022 World Cup victory with this iconic sky-blue and white home jersey. This is the official champion edition featuring the gold FIFA Winners Badge.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false,
+      "league": ""
+    },
+    {
+      "id": "5",
+      "name": "Mexico De Oro National Kit",
+      "price": "₹899",
+      "image": "/images/mex-oro-1.jpg",
+      "category": "international-kits",
+      "team": "MEXICO",
+      "description": "Celebrate Mexican football heritage with the luxurious México de Oro Special Edition Jersey, crafted in a bold black-and-gold colorway that symbolizes power, culture, and elegance.\nThis kit features an embossed all-over Aztec-inspired pattern representing Mexico’s traditional artistry, paired with gold detailing for a truly premium look.\n\nThe iconic gold Adidas trefoil, gold national eagle emblem, and México typography give this jersey a stunning vintage aesthetic while still delivering modern performance.",
+      "sizes": [
+        "S",
+        "M",
+        "L"
+      ],
+      "inStock": true,
+      "featured": true,
+      "league": ""
+    },
+    {
+      "id": "6",
+      "name": "Real Madrid 2025/26 Third Kit",
+      "price": "₹1,099",
+      "originalPrice": "₹1,299",
+      "discount": "17% OFF",
+      "image": "/images/real-third.webp",
+      "category": "2025-26-season-kits",
+      "team": "REAL MADRID",
+      "league": "LALIGA",
+      "description": "Bring back the iconic Madrid flair with the 2025/26 Real Madrid Third Jersey, designed in a striking royal blue that pays tribute to classic 90s kits. This edition blends modern performance tech with vintage detailing, making it a fan-favorite for collectors and players alike.\n\nFeaturing the Adidas Trefoil logo, classic striping on the shoulders, and the world-famous Real Madrid crest, this jersey delivers a perfect balance of nostalgia and elegance.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": true
+    },
+    {
+      "id": "7",
+      "name": "AS ROMA 2025/26 THIRD JERSEY",
+      "price": "₹899",
+      "image": "/images/roma-third-1.webp",
+      "category": "2025-26-season-kits",
+      "team": "AS ROMA",
+      "description": "A tribute to the eternal city. The AS Roma 2025/26 Third Jersey delivers a stunning mix of heritage and modern elegance. The crisp white base is elevated with classic Roma green and gold detailing, celebrating the club’s deep legacy and its connection to Rome’s historic architecture and culture.\n\nThe retro adidas logo and refined collar design add a timeless touch, while the lightweight fan-version fabric keeps you comfortable every moment you wear it.",
+      "sizes": [
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": true,
+      "league": "SERIE A"
+    },
+    {
+      "id": "1765028426181",
+      "name": "Portugal Black Panther Kit",
+      "price": "₹1,199",
+      "originalPrice": "₹1,499",
+      "discount": "26% OFF",
+      "image": "/images/portugal-60.webp",
+      "category": "international-kits",
+      "team": "PORTUGAL",
+      "league": "",
+      "description": "A stunning black jersey with gold numbering and trims. Elegant and bold, made with Puma dryCELL tech.\n\nFabric: dryCELL polyester\nFeatures: Gold detailing, modern collar, lightweight finish",
+      "sizes": [
+        "L",
+        "M"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765171934138",
+      "name": "Ajax 125th Anniversary Special Jersey",
+      "price": "₹1,999",
+      "image": "/images/ajax-125.webp",
+      "category": "retro-jerseys",
+      "team": "AJAX ",
+      "league": "EREDIVISIE",
+      "description": "A clean, timeless classic based on Ajax’s golden era. The jersey features the unmistakable broad red center panel with pure white sleeves — everything that defines the Ajax identity.\n\nEra: Inspired by 1970s–80s Ajax Home Kits\n\nFabric: Retro-style polyester for durability with a cotton-touch feel\n\nComfort: Long sleeves with soft ribbed cuffs, relaxed vintage cut",
+      "sizes": [
+        "L",
+        "M",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765192525494",
+      "name": "Aston Villa 2025/26 Away Jersey",
+      "price": "₹799",
+      "originalPrice": "₹999",
+      "discount": "20% OFF",
+      "image": "/images/ast-away.jpg",
+      "category": "2025-26-season-kits",
+      "team": "ASTON VILLA",
+      "league": "PREMIER LEAGUE",
+      "description": "This dark, sleek 25/26 Aston Villa Away Jersey features a futuristic charcoal design with ice-blue detailing — perfect for fans who love a bold, modern aesthetic.",
+      "sizes": [
+        "L",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765192693317",
+      "name": "Bayern Munich 125th Anniversary Special Edition Jersey",
+      "price": "₹1,999",
+      "image": "/images/bayern-125.webp",
+      "category": "retro-jerseys",
+      "team": "BAYERN MUNCHEN",
+      "league": "BUNDESLIGA",
+      "description": "A legendary collector’s item celebrating 125 years of Bayern Munich. The deep red base with gold detailing pays tribute to the club’s rich heritage.",
+      "sizes": [
+        "L",
+        "M"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765192911382",
+      "name": "Belgium 2024/25 Away Jersey",
+      "price": "₹999",
+      "image": "/images/belgium-away.webp",
+      "category": "international-kits",
+      "team": "BELGIUM",
+      "league": "",
+      "description": "Inspired by Belgium’s early football heritage, the 2024/25 Away Kit features a refreshing ice-blue color with a retro collar and diamond-shaped jacquard pattern celebrating the nation’s football history.",
+      "sizes": [
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765193015336",
+      "name": "FC BARCELONA X TRAVIS SCOTT LIMITED EDITION JERSEY",
+      "price": "₹1,599",
+      "originalPrice": "₹1,499",
+      "discount": "18% OFF",
+      "image": "/images/fcb-cj.png",
+      "category": "retro-jerseys",
+      "team": "FC BARCELONA",
+      "league": "LALIGA",
+      "description": "A masterpiece born from the world of football and hip-hop culture, the FC Barcelona x Travis Scott Jersey brings bold design with signature Cactus Jack energy. This limited-edition piece blends the club’s iconic blaugrana colors with Travis Scott’s dark, flame-driven aesthetic.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765193143614",
+      "name": "Liverpool 2025/26 Third Jersey",
+      "price": "₹1,199",
+      "image": "/images/liv-third.webp",
+      "category": "2025-26-season-kits",
+      "team": "LIVERPOOL",
+      "league": "PREMIER LEAGUE",
+      "description": "Step onto the pitch with a piece of history reimagined in modern performance design. The Liverpool 2025/26 Third Jersey Player Version brings back a bold sea-green base inspired by the club’s iconic late ’80s and early ’90s kits, refreshed with subtle vertical striping for a sleek, dynamic look. The return of the classic Trefoil logo alongside the retro LFC crest adds a heritage touch, while contrasting collar and sleeve details complete the timeless style.",
+      "sizes": [
+        "M",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765193336635",
+      "name": "South Korea 2024/25 Home Jersey",
+      "price": "₹799",
+      "image": "/images/korea-away.webp",
+      "category": "international-kits",
+      "team": "SOUTH KOREA",
+      "league": "",
+      "description": "The Reds’ 2024/25 Home Kit returns in a deeper, premium red shade with clean white trims. Crafted with AEROREADY for breathable performance and an authentic club crest.",
+      "sizes": [
+        "L",
+        "S",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765193659431",
+      "name": "Germany 2024/25 Away Jersey",
+      "price": "₹999",
+      "image": "/images/germany-away.webp",
+      "category": "international-kits",
+      "team": "GERMANY",
+      "league": "",
+      "description": "A bold statement kit featuring a striking gradient fade from pink to deep purple, inspired by modern German street fashion.",
+      "sizes": [
+        "M",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765193860288",
+      "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
+      "price": "₹3,099",
+      "originalPrice": "₹3,599",
+      "discount": "14% OFF",
+      "image": "/images/barca-blue-anthem-jacket.webp",
+      "category": "anthem-jackets",
+      "team": "FC BARCELONA",
+      "league": "LALIGA",
+      "description": "Step into Blaugrana style with the FC Barcelona 2024/25 Blue Anthem Jacket, worn by players during official lineup walkouts. This edition features a deep royal-blue base with an all-over geometric pattern inspired by Barcelona’s culture, architecture, and the spirit of the city.\n\nThe neon-yellow Nike Swoosh and Barça crest add a sharp contrast, giving the jacket a modern, standout look. Built using Nike’s lightweight, smooth fabric, it offers all-day comfort whether you're training, traveling, or repping the club casually.",
+      "sizes": [
+        "L",
+        "M",
+        "XL",
+        "XXL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765194001359",
+      "name": "Al-Nassr FC 2025/26 Home Jersey",
+      "price": "₹1,099",
+      "image": "/images/alnassr-home.jpg",
+      "category": "2025-26-season-kits",
+      "team": "AL NASSR",
+      "league": "SAUDI PRO LEAGUE",
+      "description": "Step into the legacy of champions with the Al-Nassr FC 2024/25 Home Jersey, a bold expression of pride, heritage, and passion. Featuring the club’s iconic yellow base accented with sharp royal blue detailing, this jersey captures the heart of Saudi football.\n\nDesigned by Adidas, it sports the three-stripe branding on the shoulders, a modern V-neck collar, and lightweight AEROREADY technology to keep you cool and dry whether you're in the stands or on the pitch. The front proudly showcases the KAFD sponsor logo, with the Al-Nassr crest stitched over the heart – a symbol of loyalty and strength.",
+      "sizes": [
+        "L",
+        "M",
+        "S",
+        "XL",
+        "XXL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765194218430",
+      "name": "AC Milan 125th Anniversary Special Jersey",
+      "price": "₹1,999",
+      "image": "/images/ac-125.webp",
+      "category": "retro-jerseys",
+      "team": "AC MILAN",
+      "league": "SERIE A",
+      "description": "Celebrate 125 years of Rossoneri greatness with the AC Milan 125th Anniversary Edition Jersey—a tribute to the club’s legendary history and enduring legacy. This special-edition kit blends Milan’s iconic style with premium details that honor the passion, victories, and unforgettable moments that have defined the club since 1899.\n\nKey Features:\n\nTimeless Rossoneri Stripes – A classic design inspired by Milan’s rich heritage, reimagined with a modern touch.\n\nGolden Anniversary Crest – Featuring a commemorative 125-year emblem, symbolizing a century and a quarter of football excellence.",
+      "sizes": [
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1765194480126",
+      "name": "Manchester United 2025/26 Away Jersey",
+      "price": "₹999",
+      "image": "/images/utd-away.webp",
+      "category": "2025-26-season-kits",
+      "team": "MANCHESTER UNITED",
+      "league": "PREMIER LEAGUE",
+      "description": "tep into the future of football fashion with the Manchester United 2025/26 Away Jersey, a bold fusion of innovation, identity, and minimalistic elegance. Crafted in collaboration with adidas, this limited-edition kit features a sleek frosted lavender and white gradient design inspired by Manchester’s iconic architecture and electric energy.\n\nSnapdragon Sponsor Logo – Front and center, representing cutting-edge performance and tech power.\n\nPremium Fabric – Engineered with adidas’ latest AEROREADY technology for unmatched comfort, breathability, and moisture-wicking during intense matches or casual wear.",
+      "sizes": [
+        "L",
+        "M",
+        "S"
+      ],
+      "inStock": true,
+      "featured": false
+    }
+  ]
+}
