@@ -62,12 +62,23 @@ function Cart() {
       return
     }
 
-    if (couponCode.toUpperCase() === 'DRIBBLEFIT20') {
+    const upperCaseCode = couponCode.toUpperCase()
+    
+    if (upperCaseCode === 'DRIBBLEFIT20') {
       applyCoupon({ 
         discount: 20, 
         type: 'percentage', 
         message: '20% off your entire order!',
         code: 'DRIBBLEFIT20'
+      })
+      setCouponError('')
+      setCouponCode('')
+    } else if (upperCaseCode === 'NEWYEAR2026') {
+      applyCoupon({ 
+        discount: 35, 
+        type: 'percentage', 
+        message: '35% off your entire order! Happy New Year 2026!',
+        code: 'NEWYEAR2026'
       })
       setCouponError('')
       setCouponCode('')
@@ -81,6 +92,29 @@ function Cart() {
     removeCoupon()
     setCouponCode('')
     setCouponError('')
+  }
+
+  // Calculate item price including customization
+  const getItemPrice = (item) => {
+    const basePrice = parseInt(item.price.replace(/[^0-9]/g, '')) || 0
+    const customizationTotal = item.customizationData?.customizationTotal || 0
+    return basePrice + customizationTotal
+  }
+
+  // Format price for display
+  const formatPrice = (amount) => {
+    return `₹${amount.toLocaleString('en-IN')}`
+  }
+
+  // Get item total (price * quantity)
+  const getItemTotal = (item) => {
+    const itemPrice = getItemPrice(item)
+    return itemPrice * item.quantity
+  }
+
+  // Get subtotal of all items
+  const getSubtotal = () => {
+    return cartItems.reduce((total, item) => total + getItemTotal(item), 0)
   }
 
   if (cartItems.length === 0) {
@@ -146,9 +180,21 @@ function Cart() {
 
                   <div className="flex-grow">
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="text-white font-poppins font-semibold text-lg">
-                        {item.name}
-                      </h3>
+                      <div>
+                        <h3 className="text-white font-poppins font-semibold text-lg">
+                          {item.name}
+                        </h3>
+                        
+                        {/* Show customization badge if item is customized */}
+                        {item.customizationData && (
+                          <div className="inline-flex items-center gap-1 bg-[#00ff00]/20 text-[#00ff00] text-xs font-bold px-2 py-1 rounded-full mt-1">
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            CUSTOMIZED
+                          </div>
+                        )}
+                      </div>
                       <button
                         onClick={() => handleRemoveItem(item.id, item.size)}
                         className="text-gray-400 hover:text-red-400 transition-colors"
@@ -162,6 +208,30 @@ function Cart() {
                     <div className="text-gray-400 text-sm mb-4">
                       <div>Team: {item.team}</div>
                       <div>Size: {item.size}</div>
+                      
+                      {/* Show customization details */}
+                      {item.customizationData && (
+                        <div className="mt-2 space-y-1">
+                          {item.customizationData.playerName && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500">Name:</span>
+                              <span className="text-white font-semibold">{item.customizationData.playerName.toUpperCase()}</span>
+                            </div>
+                          )}
+                          {item.customizationData.playerNumber && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500">Number:</span>
+                              <span className="text-white font-bold text-lg">{item.customizationData.playerNumber}</span>
+                            </div>
+                          )}
+                          {item.customizationData.patch && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-gray-500">Patch:</span>
+                              <span className="text-white">{item.customizationData.patch.name}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -183,8 +253,15 @@ function Cart() {
                         </button>
                       </div>
 
-                      <div className="text-[#00ff00] font-poppins font-bold text-lg">
-                        {item.price}
+                      <div className="text-right">
+                        <div className="text-[#00ff00] font-poppins font-bold text-lg">
+                          {formatPrice(getItemPrice(item))}
+                        </div>
+                        {item.customizationData?.customizationTotal > 0 && (
+                          <div className="text-gray-400 text-xs">
+                            +{formatPrice(item.customizationData.customizationTotal)} customization
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -203,7 +280,7 @@ function Cart() {
                 <div className="flex gap-2 mb-2">
                   <input
                     type="text"
-                    placeholder="Enter DRIBBLEFIT20"
+                    placeholder="Enter Valid Coupon"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     className="flex-1 bg-[#1a1a1a] border border-gray-700 text-white px-3 py-2 rounded-lg focus:outline-none focus:border-[#00ff00] text-sm placeholder-gray-500"
@@ -240,7 +317,7 @@ function Cart() {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal ({cartItems.reduce((sum, item) => sum + item.quantity, 0)} items)</span>
-                  <span>₹{getCartTotal().toLocaleString()}</span>
+                  <span>{formatPrice(getSubtotal())}</span>
                 </div>
                 
                 <div className="flex justify-between text-gray-400">
@@ -251,19 +328,19 @@ function Cart() {
                 {appliedCoupon && (
                   <div className="flex justify-between text-[#00ff00]">
                     <span>Coupon Discount ({appliedCoupon.discount}%)</span>
-                    <span>-₹{getCouponDiscount().toFixed(2)}</span>
+                    <span>-{formatPrice(getCouponDiscount())}</span>
                   </div>
                 )}
                 
                 <div className="border-t border-gray-700 pt-4">
                   <div className="flex justify-between text-white font-poppins font-bold text-lg">
                     <span>Total</span>
-                    <span>₹{getFinalTotal().toFixed(2)}</span>
+                    <span>{formatPrice(getFinalTotal())}</span>
                   </div>
                   
                   {appliedCoupon && (
                     <div className="text-[#00ff00] text-sm mt-2 text-right">
-                      You save ₹{getCouponDiscount().toFixed(2)}
+                      You save {formatPrice(getCouponDiscount())}
                     </div>
                   )}
                 </div>

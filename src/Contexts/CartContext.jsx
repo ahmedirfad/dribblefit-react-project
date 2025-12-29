@@ -11,6 +11,7 @@ export const CartProvider = ({ children }) => {
 
   useEffect(() => {
     loadCartFromDB()
+    loadCouponFromStorage() // Load coupon from localStorage
   }, [])
 
   // Load cart from db.json
@@ -50,6 +51,19 @@ export const CartProvider = ({ children }) => {
     }
   }
 
+  // Load coupon from localStorage
+  const loadCouponFromStorage = () => {
+    const savedCoupon = localStorage.getItem('dribblefit-coupon')
+    if (savedCoupon) {
+      try {
+        setAppliedCoupon(JSON.parse(savedCoupon))
+      } catch (error) {
+        console.error('Error loading coupon:', error)
+        localStorage.removeItem('dribblefit-coupon')
+      }
+    }
+  }
+
   // Save cart to db.json
   const saveCartToDB = async (items) => {
     try {
@@ -68,6 +82,15 @@ export const CartProvider = ({ children }) => {
     }
   }
 
+  // Save coupon to localStorage
+  const saveCouponToStorage = (coupon) => {
+    if (coupon) {
+      localStorage.setItem('dribblefit-coupon', JSON.stringify(coupon))
+    } else {
+      localStorage.removeItem('dribblefit-coupon')
+    }
+  }
+
   // Auto-save when cart changes
   useEffect(() => {
     if (isInitialized && cartItems.length >= 0) {
@@ -75,34 +98,50 @@ export const CartProvider = ({ children }) => {
     }
   }, [cartItems, isInitialized])
 
+  // Auto-save when coupon changes
+  useEffect(() => {
+    if (isInitialized) {
+      saveCouponToStorage(appliedCoupon)
+    }
+  }, [appliedCoupon, isInitialized])
+
   const updateCartCount = (items) => {
     const count = items.reduce((total, item) => total + item.quantity, 0)
     setCartCount(count)
   }
 
-  const addToCart = (product, size, quantity = 1) => {
+  const addToCart = (product, size, quantity = 1, customizationData = null) => {
     setCartItems(prevItems => {
-      const existingItem = prevItems.find(
-        item => item.id === product.id && item.size === size
+      // Check if item with same ID, size AND customization exists
+      const existingItem = prevItems.find(item =>
+        item.id === product.id &&
+        item.size === size &&
+        JSON.stringify(item.customizationData || {}) === JSON.stringify(customizationData || {})
       )
 
       let newItems
       if (existingItem) {
+        // If same item with same customization exists, update quantity
         newItems = prevItems.map(item =>
-          item.id === product.id && item.size === size
+          item.id === product.id &&
+          item.size === size &&
+          JSON.stringify(item.customizationData || {}) === JSON.stringify(customizationData || {})
             ? { ...item, quantity: item.quantity + quantity }
             : item
         )
       } else {
+        // Create new item with customization data
         const newItem = {
           id: product.id,
           name: product.name,
-          price: product.price,
+          price: product.price, // Keep the original price string
           image: product.image,
           size: size,
           quantity: quantity,
           inStock: product.inStock,
-          team: product.team
+          team: product.team,
+          league: product.league,
+          customizationData: customizationData
         }
         newItems = [...prevItems, newItem]
       }
@@ -158,18 +197,29 @@ export const CartProvider = ({ children }) => {
     setAppliedCoupon(null)
   }
 
+  // Helper function to extract price from string and add customization
+  const getItemPrice = (item) => {
+    // Extract numeric value from price string (handles formats like "₹3,999" or "₹2999")
+    const priceString = item.price ? item.price.replace('₹', '').replace(/,/g, '') : '0'
+    const basePrice = parseFloat(priceString) || 0
+    
+    // Add customization cost if exists
+    const customizationTotal = item.customizationData?.customizationTotal || 0
+    
+    return basePrice + customizationTotal
+  }
+
   const getCartTotal = () => {
     return cartItems.reduce((total, item) => {
-      const priceString = item.price.replace('₹', '').replace(',', '')
-      const price = parseFloat(priceString)
-      return total + (price * item.quantity)
+      const itemPrice = getItemPrice(item)
+      return total + (itemPrice * item.quantity)
     }, 0)
   }
 
   const getCouponDiscount = () => {
     if (!appliedCoupon) return 0
     const subtotal = getCartTotal()
-    return subtotal * (appliedCoupon.discount / 100)
+    return (subtotal * appliedCoupon.discount) / 100
   }
 
   const getFinalTotal = () => {
@@ -211,8 +261,11 @@ export const CartProvider = ({ children }) => {
     const merged = [...dbCart]
     
     localCart.forEach(localItem => {
+      // Check for exact match including customization
       const existingItem = merged.find(item => 
-        item.id === localItem.id && item.size === localItem.size
+        item.id === localItem.id && 
+        item.size === localItem.size &&
+        JSON.stringify(item.customizationData || {}) === JSON.stringify(localItem.customizationData || {})
       )
       
       if (existingItem) {
@@ -240,7 +293,8 @@ export const CartProvider = ({ children }) => {
       getCouponDiscount,
       getFinalTotal,
       getCartItemCount,
-      syncCartOnLogin
+      syncCartOnLogin,
+      getItemPrice // Export this helper function
     }}>
       {children}
     </CartContext.Provider>

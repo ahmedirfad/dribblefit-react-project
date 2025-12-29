@@ -20,9 +20,9 @@ function Orders() {
   // Get saved addresses
   const savedAddresses = user?.addresses || [];
 
-  // Fetch orders from user data
+  // Fetch orders from BOTH orders collection AND user data
   useEffect(() => {
-    const fetchOrders = () => {
+    const fetchOrders = async () => {
       if (!user) {
         setLoading(false);
         return;
@@ -32,19 +32,46 @@ function Orders() {
       setError('');
       
       try {
-        // Get orders from user object (they're stored in user.orders)
+        let allOrders = [];
+        
+        // Try to get orders from /orders collection first
+        try {
+          const ordersResponse = await api.get('/orders');
+          const userOrdersFromCollection = ordersResponse.data.filter(order => 
+            order.userId === user.id || order.username === user.username
+          );
+          
+          if (userOrdersFromCollection.length > 0) {
+            allOrders = [...userOrdersFromCollection];
+          }
+        } catch (collectionError) {
+          console.warn('Could not fetch from /orders collection:', collectionError.message);
+        }
+        
+        // Also get orders from user object
         const userOrders = user.orders || [];
+        if (userOrders.length > 0) {
+          // Merge orders, avoiding duplicates
+          userOrders.forEach(userOrder => {
+            if (!allOrders.some(order => order.id === userOrder.id)) {
+              allOrders.push(userOrder);
+            }
+          });
+        }
         
         // Sort orders by date (newest first)
-        const sortedOrders = userOrders.sort((a, b) => 
-          new Date(b.date) - new Date(a.date)
+        const sortedOrders = allOrders.sort((a, b) => 
+          new Date(b.date || b.createdAt || 0) - new Date(a.date || a.createdAt || 0)
         );
         
         setOrders(sortedOrders);
         
-        if (userOrders.length === 0) {
+        if (sortedOrders.length === 0) {
           setError('No orders found. Start shopping to place your first order.');
         }
+        
+        console.log('Fetched orders:', sortedOrders); // Debug log
+        
       } catch (error) {
         console.error('Error fetching orders:', error);
         setError('Failed to load orders. Please try again.');
@@ -55,6 +82,41 @@ function Orders() {
 
     fetchOrders();
   }, [user]);
+
+  // Helper function to check if item has customization
+  const hasCustomization = (item) => {
+    return item.customizationData && (
+      item.customizationData.playerName || 
+      item.customizationData.playerNumber || 
+      item.customizationData.patches?.length > 0 ||
+      item.customizationData.patch
+    )
+  }
+
+  // Helper function to get customization summary
+  const getCustomizationSummary = (item) => {
+    if (!hasCustomization(item)) return null
+    
+    const { customizationData } = item
+    let summary = []
+    
+    if (customizationData.playerName) {
+      summary.push(`${customizationData.playerName.toUpperCase()}`)
+    }
+    if (customizationData.playerNumber) {
+      summary.push(`#${customizationData.playerNumber}`)
+    }
+    if (customizationData.patch) {
+      summary.push(`+${customizationData.patch.name}`)
+    }
+    if (customizationData.patches?.length > 0) {
+      customizationData.patches.forEach(patch => {
+        summary.push(`+${patch.name}`)
+      })
+    }
+    
+    return summary.join(' ')
+  }
 
   const getStatusColor = (status) => {
     if (!status) return 'text-gray-400 bg-gray-400/10';
@@ -168,19 +230,48 @@ function Orders() {
   const getItemPrice = (item) => {
     if (!item) return '₹0';
     
-    // If price is already a string with ₹ symbol
-    if (typeof item.price === 'string') {
-      return item.price;
+    let priceValue = 0;
+    
+    // Try multiple ways to get the price
+    if (item.priceString) {
+      const match = item.priceString.match(/₹?([\d,.]+)/);
+      if (match) {
+        priceValue = parseFloat(match[1].replace(/,/g, ''));
+      }
+    }
+    else if (typeof item.price === 'number') {
+      priceValue = item.price;
+    }
+    else if (typeof item.price === 'string') {
+      const match = item.price.match(/₹?([\d,.]+)/);
+      if (match) {
+        priceValue = parseFloat(match[1].replace(/,/g, ''));
+      }
+    }
+    else if (item.total && typeof item.total === 'number') {
+      const quantity = item.quantity || 1;
+      priceValue = item.total / quantity;
     }
     
-    // If price is a number
-    if (typeof item.price === 'number') {
-      return `₹${item.price.toFixed(2)}`;
+    // If price is still 0, check for product.price
+    if (priceValue === 0 && item.product?.price) {
+      if (typeof item.product.price === 'string') {
+        const match = item.product.price.match(/₹?([\d,.]+)/);
+        if (match) {
+          priceValue = parseFloat(match[1].replace(/,/g, ''));
+        }
+      } else if (typeof item.product.price === 'number') {
+        priceValue = item.product.price;
+      }
     }
     
-    // Try to extract price from item object
-    const price = item.price || item.product?.price || 0;
-    return `₹${parseFloat(price).toFixed(2)}`;
+    // Add customization cost if exists
+    if (item.customizationData?.customizationTotal) {
+      priceValue += item.customizationData.customizationTotal;
+    }
+    
+    // Format the price with ₹ symbol and 2 decimal places
+    return `₹${priceValue.toFixed(2)}`;
   };
 
   // Helper function to get payment method display
@@ -196,23 +287,68 @@ function Orders() {
     return method.charAt(0).toUpperCase() + method.slice(1);
   };
 
+  // Helper function to calculate item subtotal
+  const calculateItemSubtotal = (item) => {
+    // First try to get item.total
+    if (item.total && !isNaN(item.total)) {
+      return parseFloat(item.total);
+    }
+    
+    // Otherwise calculate from price and quantity
+    const priceStr = getItemPrice(item);
+    const price = parseFloat(priceStr.replace('₹', ''));
+    const quantity = item.quantity || 1;
+    const subtotal = price * quantity;
+    
+    return subtotal;
+  };
+
+  // Helper function to calculate order subtotal
+  const calculateOrderSubtotal = (order) => {
+    if (!order.items || !Array.isArray(order.items)) return 0;
+    
+    return order.items.reduce((sum, item) => {
+      return sum + calculateItemSubtotal(item);
+    }, 0);
+  };
+
   // Helper function to calculate order total
   const calculateOrderTotal = (order) => {
     if (!order) return 0;
     
-    // If total is already calculated
-    if (order.total) {
+    // If total is already calculated and valid
+    if (order.total && !isNaN(order.total)) {
       return parseFloat(order.total);
     }
     
-    // Calculate from items
-    return order.items?.reduce((sum, item) => {
-      const price = typeof item.price === 'string' 
-        ? parseFloat(item.price.replace('₹', '').replace(',', ''))
-        : (item.price || 0);
-      return sum + (price * (item.quantity || 1));
-    }, 0) || 0;
+    // Calculate from items and other charges
+    const subtotal = calculateOrderSubtotal(order);
+    let discount = 0;
+    if (order.couponDiscount && !isNaN(order.couponDiscount)) {
+      discount = parseFloat(order.couponDiscount);
+    } else if (order.discount && !isNaN(order.discount)) {
+      discount = parseFloat(order.discount);
+    }
+    
+    let codCharges = 0;
+    if (order.codCharges && !isNaN(order.codCharges)) {
+      codCharges = parseFloat(order.codCharges);
+    }
+    
+    const total = subtotal - discount + codCharges;
+    return total;
   };
+
+  // Helper function to format price
+  const formatPrice = (amount) => {
+    if (typeof amount === 'number') {
+      return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+    if (typeof amount === 'string') {
+      return amount.includes('₹') ? amount : `₹${amount}`
+    }
+    return '₹0.00'
+  }
 
   if (!isAuthenticated) {
     return (
@@ -353,6 +489,7 @@ function Orders() {
                 <div className="space-y-6">
                   {orders.map((order) => {
                     const orderTotal = calculateOrderTotal(order);
+                    const orderSubtotal = calculateOrderSubtotal(order);
                     
                     return (
                       <div 
@@ -367,9 +504,15 @@ function Orders() {
                               <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status)}`}>
                                 {order.status || 'Processing'}
                               </span>
+                              {/* Show Customized badge if any item has customization */}
+                              {order.items?.some(item => hasCustomization(item)) && (
+                                <span className="px-3 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-full border border-[#00ff00]/20">
+                                  Customized
+                                </span>
+                              )}
                             </div>
                             <div className="text-gray-400 text-sm">
-                              Placed on {formatDateTime(order.date)}
+                              Placed on {formatDateTime(order.date || order.createdAt)}
                             </div>
                           </div>
                           
@@ -402,13 +545,17 @@ function Orders() {
                               {order.items?.slice(0, 3).map((item, idx) => (
                                 <div 
                                   key={idx}
-                                  className="w-12 h-12 rounded-lg border-2 border-[#111111] overflow-hidden bg-[#1a1a1a]"
+                                  className="w-12 h-12 rounded-lg border-2 border-[#111111] overflow-hidden bg-[#1a1a1a] relative"
                                 >
                                   <img 
                                     src={item.image || item.product?.image || 'https://via.placeholder.com/150'} 
                                     alt={item.name || item.product?.name || 'Product'}
                                     className="w-full h-full object-cover"
                                   />
+                                  {/* Show customization indicator on image */}
+                                  {hasCustomization(item) && (
+                                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#00ff00] rounded-full border border-black"></div>
+                                  )}
                                 </div>
                               ))}
                               {order.items?.length > 3 && (
@@ -426,11 +573,17 @@ function Orders() {
                                 {order.items?.map(item => (item.name || item.product?.name || 'Product').split(' ')[0]).join(', ')}
                                 {order.items?.length > 3 && '...'}
                               </div>
+                              {/* Show customization summary */}
+                              {order.items?.some(item => hasCustomization(item)) && (
+                                <div className="text-[#00ff00] text-xs mt-1">
+                                  {order.items.filter(item => hasCustomization(item)).length} item(s) customized
+                                </div>
+                              )}
                             </div>
                             
                             <div className="text-right">
                               <div className="text-[#00ff00] font-poppins font-bold text-xl">
-                                ₹{orderTotal.toFixed(2)}
+                                {formatPrice(orderTotal)}
                               </div>
                               <div className="text-gray-400 text-sm">
                                 {getPaymentMethod(order.paymentMethod)}
@@ -447,27 +600,109 @@ function Orders() {
                             <div>
                               <h4 className="text-white font-poppins font-semibold mb-4">Items in this order</h4>
                               <div className="space-y-4">
-                                {order.items?.map((item, idx) => (
-                                  <div key={idx} className="flex items-center gap-4 p-3 bg-[#1a1a1a] rounded-xl">
-                                    <img 
-                                      src={item.image || item.product?.image || 'https://via.placeholder.com/150'} 
-                                      alt={item.name || item.product?.name || 'Product'}
-                                      className="w-16 h-16 rounded-lg object-cover"
-                                    />
-                                    <div className="flex-1">
-                                      <div className="text-white font-poppins font-semibold">{item.name || item.product?.name || 'Product'}</div>
-                                      <div className="text-gray-400 text-sm">
-                                        Size: {item.size || 'M'} • Qty: {item.quantity || 1}
+                                {order.items?.map((item, idx) => {
+                                  const itemPrice = getItemPrice(item);
+                                  const itemSubtotal = calculateItemSubtotal(item);
+                                  const quantity = item.quantity || 1;
+                                  const hasCustom = hasCustomization(item);
+                                  const customizationSummary = getCustomizationSummary(item);
+                                  
+                                  return (
+                                    <div key={idx} className="bg-[#1a1a1a] rounded-xl p-4">
+                                      <div className="flex items-start gap-4">
+                                        <div className="relative">
+                                          <img 
+                                            src={item.image || item.product?.image || 'https://via.placeholder.com/150'} 
+                                            alt={item.name || item.product?.name || 'Product'}
+                                            className="w-16 h-16 rounded-lg object-cover"
+                                          />
+                                          {hasCustom && (
+                                            <div className="absolute -top-2 -right-2 w-5 h-5 bg-[#00ff00] rounded-full border-2 border-black flex items-center justify-center">
+                                              <svg className="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                              </svg>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="flex-1">
+                                          <div className="flex justify-between items-start">
+                                            <div>
+                                              <div className="text-white font-poppins font-semibold">{item.name || item.product?.name || 'Product'}</div>
+                                              <div className="text-gray-400 text-sm">
+                                                Size: {item.size || 'M'} • Qty: {quantity}
+                                              </div>
+                                              {item.team && (
+                                                <div className="text-gray-500 text-xs">Team: {item.team}</div>
+                                              )}
+                                            </div>
+                                          </div>
+                                          
+                                          {/* Customization Details */}
+                                          {hasCustom && (
+                                            <div className="mt-3 pt-3 border-t border-gray-700">
+                                              <p className="text-[#00ff00] text-sm font-semibold mb-2">Customization Details:</p>
+                                              <div className="space-y-2">
+                                                {item.customizationData?.playerName && (
+                                                  <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">Player Name:</span>
+                                                    <span className="text-white font-medium">{item.customizationData.playerName.toUpperCase()}</span>
+                                                  </div>
+                                                )}
+                                                {item.customizationData?.playerNumber && (
+                                                  <div className="flex justify-between text-sm">
+                                                    <span className="text-gray-400">Player Number:</span>
+                                                    <span className="text-white font-medium">#{item.customizationData.playerNumber}</span>
+                                                  </div>
+                                                )}
+                                                {(item.customizationData?.patch || item.customizationData?.patches?.length > 0) && (
+                                                  <div>
+                                                    <p className="text-gray-400 text-sm mb-1">Patches:</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                      {item.customizationData.patch && (
+                                                        <span className="px-2 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-md border border-[#00ff00]/20">
+                                                          {item.customizationData.patch.name} (+{formatPrice(item.customizationData.patch.price)})
+                                                        </span>
+                                                      )}
+                                                      {item.customizationData.patches?.map((patch, patchIdx) => (
+                                                        <span key={patchIdx} className="px-2 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-md border border-[#00ff00]/20">
+                                                          {patch.name} (+{formatPrice(patch.price)})
+                                                        </span>
+                                                      ))}
+                                                    </div>
+                                                  </div>
+                                                )}
+                                                {item.customizationData?.customizationTotal > 0 && (
+                                                  <div className="flex justify-between text-sm pt-2 border-t border-gray-700">
+                                                    <span className="text-gray-400">Customization Total:</span>
+                                                    <span className="text-[#00ff00] font-bold">
+                                                      +{formatPrice(item.customizationData.customizationTotal)}
+                                                    </span>
+                                                  </div>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                        <div className="text-right">
+                                          <div className="text-[#00ff00] font-poppins font-bold">
+                                            {itemPrice}
+                                          </div>
+                                          {quantity > 1 && (
+                                            <div className="text-gray-400 text-sm">
+                                              {quantity} × {formatPrice(parseFloat(itemPrice.replace('₹', '')) / quantity)} = {formatPrice(itemSubtotal)}
+                                            </div>
+                                          )}
+                                          {/* Show customization indicator */}
+                                          {hasCustom && customizationSummary && (
+                                            <div className="text-[#00ff00] text-xs mt-2 max-w-[150px] truncate">
+                                              {customizationSummary}
+                                            </div>
+                                          )}
+                                        </div>
                                       </div>
-                                      {item.team && (
-                                        <div className="text-gray-500 text-xs">Team: {item.team}</div>
-                                      )}
                                     </div>
-                                    <div className="text-[#00ff00] font-poppins font-bold">
-                                      {getItemPrice(item)}
-                                    </div>
-                                  </div>
-                                ))}
+                                  );
+                                })}
                               </div>
                             </div>
 
@@ -476,35 +711,34 @@ function Orders() {
                               <h4 className="text-white font-poppins font-semibold mb-4">Order Summary</h4>
                               <div className="space-y-3">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-400">Subtotal</span>
+                                  <span className="text-gray-400">Subtotal ({order.items?.length || 0} items)</span>
                                   <span className="text-white">
-                                    ₹{order.items?.reduce((sum, item) => {
-                                      const price = typeof item.price === 'string' 
-                                        ? parseFloat(item.price.replace('₹', '').replace(',', ''))
-                                        : (item.price || item.product?.price || 0);
-                                      return sum + (price * (item.quantity || 1));
-                                    }, 0).toFixed(2) || '0.00'}
+                                    {formatPrice(orderSubtotal)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-gray-400">Shipping</span>
                                   <span className="text-[#00ff00]">FREE</span>
                                 </div>
-                                {order.couponApplied && order.couponApplied !== 'none' && (
+                                {order.couponApplied && order.couponApplied !== 'none' && order.couponDiscount > 0 && (
                                   <div className="flex justify-between text-[#00ff00]">
-                                    <span>Coupon Applied</span>
-                                    <span>- ₹{order.couponDiscount || '0.00'}</span>
+                                    <span>Coupon Discount ({order.couponApplied})</span>
+                                    <span>- {formatPrice(order.couponDiscount)}</span>
                                   </div>
                                 )}
-                                {order.codCharges && (
+                                {order.codCharges && order.codCharges > 0 && (
                                   <div className="flex justify-between text-yellow-400">
                                     <span>COD Charges</span>
-                                    <span>+ ₹{order.codCharges.toFixed(2)}</span>
+                                    <span>+ {formatPrice(order.codCharges)}</span>
                                   </div>
                                 )}
-                                <div className="flex justify-between text-white font-poppins font-bold text-lg pt-2 border-t border-gray-700">
-                                  <span>Total</span>
-                                  <span>₹{orderTotal.toFixed(2)}</span>
+                                <div className="border-t border-gray-700 pt-2 mt-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-white font-bold">Total</span>
+                                    <span className="text-[#00ff00] font-bold text-lg">
+                                      {formatPrice(orderTotal)}
+                                    </span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
@@ -514,15 +748,15 @@ function Orders() {
                               <div>
                                 <h4 className="text-white font-poppins font-semibold mb-3">Shipping Address</h4>
                                 <div className="bg-[#1a1a1a] rounded-xl p-4">
-                                  <div className="text-white font-semibold mb-2">{order.shippingAddress?.name || 'N/A'}</div>
-                                  <div className="text-gray-300 mb-1">{order.shippingAddress?.address || 'N/A'}</div>
+                                  <div className="text-white font-semibold mb-2">{order.shippingAddress?.name || order.shippingAddress?.fullName || 'N/A'}</div>
+                                  <div className="text-gray-300 mb-1">{order.shippingAddress?.address || order.shippingAddress?.street || 'N/A'}</div>
                                   <div className="text-gray-300">
-                                    {order.shippingAddress?.city || ''}, {order.shippingAddress?.state || ''} - {order.shippingAddress?.pincode || ''}
+                                    {order.shippingAddress?.city || ''}, {order.shippingAddress?.state || ''} - {order.shippingAddress?.pincode || order.shippingAddress?.zipCode || ''}
                                   </div>
                                   {order.shippingAddress?.landmark && (
                                     <div className="text-gray-400 text-sm mt-1">📍 {order.shippingAddress.landmark}</div>
                                   )}
-                                  <div className="text-gray-400 mt-2">📞 {order.shippingAddress?.phone || 'N/A'}</div>
+                                  <div className="text-gray-400 mt-2">📞 {order.shippingAddress?.phone || order.shippingAddress?.phoneNumber || 'N/A'}</div>
                                 </div>
                               </div>
 

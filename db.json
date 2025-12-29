@@ -32,58 +32,38 @@
       ],
       "orders": [
         {
-          "id": "1765203321425",
-          "orderNumber": "ORD-03321425",
+          "id": "1766589892535",
+          "orderNumber": "ORD-89892535",
           "userId": "1764150476280",
           "username": "Irfad",
           "userEmail": "ahmedirfad8@gmail.com",
-          "date": "2025-12-08T14:15:21.425Z",
-          "status": "Delivered",
+          "date": "2025-12-24T15:24:52.535Z",
+          "status": "Cancelled",
           "items": [
             {
               "id": "1765171934138",
               "name": "Ajax 125th Anniversary Special Jersey",
               "image": "/images/ajax-125.webp",
               "price": 0,
-              "size": "L",
-              "quantity": 1,
+              "size": "M",
+              "quantity": 2,
               "team": "AJAX ",
               "total": 0
             },
             {
-              "id": "3",
-              "name": "Juventus FC 2025/26 Third Kit",
-              "image": "/images/juv-third1.webp",
-              "price": 0,
-              "size": "M",
-              "quantity": 1,
-              "team": "JUVENTUS",
-              "total": 0
-            },
-            {
-              "id": "1765193860288",
-              "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
-              "image": "/images/barca-blue-anthem-jacket.webp",
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
               "price": 0,
               "size": "XL",
               "quantity": 1,
-              "team": "FC BARCELONA",
-              "total": 0
-            },
-            {
-              "id": "1765193659431",
-              "name": "Germany 2024 Away Jersey",
-              "image": "/images/germany-away.webp",
-              "price": 0,
-              "size": "S",
-              "quantity": 1,
-              "team": "GERMANY",
+              "team": "AS ROMA",
               "total": 0
             }
           ],
-          "subtotal": 7096,
-          "discount": 0,
-          "total": 7106,
+          "subtotal": 4897,
+          "discount": 979.4000000000001,
+          "total": 3927.6,
           "paymentMethod": "cod",
           "shippingAddress": {
             "name": "Irfad",
@@ -95,10 +75,70 @@
             "pincode": "671124",
             "landmark": "Near Daffodil Hills"
           },
-          "couponApplied": null,
-          "couponDiscount": 0,
+          "couponApplied": "DRIBBLEFIT20",
+          "couponDiscount": 979.4000000000001,
           "codCharges": 10,
-          "trackingNumber": "TRK724146006",
+          "trackingNumber": "TRK363556737",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1765441972680",
+          "orderNumber": "ORD-41972680",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-11T08:32:52.680Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "2",
+              "name": "Liverpool 2025/26 Away Jersey",
+              "image": "/images/liv-newaway.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "LIVERPOOL",
+              "total": 0
+            },
+            {
+              "id": "1765192525494",
+              "name": "Aston Villa 2025/26 Away Jersey",
+              "image": "/images/ast-away.jpg",
+              "price": 0,
+              "size": "S",
+              "quantity": 2,
+              "team": "ASTON VILLA",
+              "total": 0
+            },
+            {
+              "id": "1765171934138",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AJAX ",
+              "total": 0
+            }
+          ],
+          "subtotal": 4596,
+          "discount": 919.2,
+          "total": 3686.8,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Imad Manzil , Azad Nagar , Chowki",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": "Near Daffodil Hills"
+          },
+          "couponApplied": "DRIBBLEFIT20",
+          "couponDiscount": 919.2,
+          "codCharges": 10,
+          "trackingNumber": "TRK867938118",
           "addressSource": "saved_address"
         },
         {
@@ -180,11 +220,246 @@
           "codCharges": 10,
           "trackingNumber": "TRK826937383",
           "addressSource": "saved_address"
+        },
+        {
+          "id": "1765203321425",
+          "orderNumber": "ORD-03321425",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-08T14:15:21.425Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "1765171934138",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 0,
+              "size": "L",
+              "quantity": 1,
+              "team": "AJAX ",
+              "total": 0
+            },
+            {
+              "id": "3",
+              "name": "Juventus FC 2025/26 Third Kit",
+              "image": "/images/juv-third1.webp",
+              "price": 0,
+              "size": "M",
+              "quantity": 1,
+              "team": "JUVENTUS",
+              "total": 0
+            },
+            {
+              "id": "1765193860288",
+              "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
+              "image": "/images/barca-blue-anthem-jacket.webp",
+              "price": 0,
+              "size": "XL",
+              "quantity": 1,
+              "team": "FC BARCELONA",
+              "total": 0
+            },
+            {
+              "id": "1765193659431",
+              "name": "Germany 2024 Away Jersey",
+              "image": "/images/germany-away.webp",
+              "price": 0,
+              "size": "S",
+              "quantity": 1,
+              "team": "GERMANY",
+              "total": 0
+            }
+          ],
+          "subtotal": 7096,
+          "discount": 0,
+          "total": 7106,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Imad Manzil , Azad Nagar , Chowki",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": "Near Daffodil Hills"
+          },
+          "couponApplied": null,
+          "couponDiscount": 0,
+          "codCharges": 10,
+          "trackingNumber": "TRK724146006",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1766829432132",
+          "orderNumber": "ORD-29432132",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-27T09:57:12.132Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
+              "price": 899,
+              "priceString": "₹899",
+              "size": "L",
+              "quantity": 1,
+              "team": "AS ROMA",
+              "total": 899
+            },
+            {
+              "id": "1765194218430",
+              "name": "AC Milan 125th Anniversary Special Jersey",
+              "image": "/images/ac-125.webp",
+              "price": 1999,
+              "priceString": "₹1,999",
+              "size": "L",
+              "quantity": 1,
+              "team": "AC MILAN",
+              "total": 1999
+            },
+            {
+              "id": "1765194001359",
+              "name": "Al-Nassr FC 2025/26 Home Jersey",
+              "image": "/images/alnassr-home.jpg",
+              "price": 1099,
+              "priceString": "₹1,099",
+              "size": "S",
+              "quantity": 1,
+              "team": "AL NASSR",
+              "total": 1099
+            }
+          ],
+          "subtotal": 3997,
+          "discount": 1398.9499999999998,
+          "couponDiscount": 1398.9499999999998,
+          "total": 2608.05,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Imad Manzil , Azad Nagar , Chowki",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": "Near Daffodil Hills"
+          },
+          "couponApplied": "NEWYEAR2026",
+          "codCharges": 10,
+          "trackingNumber": "TRK940884340",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1766906601342",
+          "orderNumber": "ORD-06601341",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2025-12-28T07:23:21.342Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "8",
+              "name": "Portugal Black Panther Kit",
+              "image": "/images/portugal-60.webp",
+              "price": 2196,
+              "priceString": "₹2,196.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "PORTUGAL",
+              "league": "",
+              "customizationData": {
+                "playerName": "IRFAD",
+                "playerNumber": "7",
+                "patch": {
+                  "id": "worldcup",
+                  "name": "World Cup",
+                  "price": 399,
+                  "image": "/images/patches/worldcup-badge.webp"
+                },
+                "customizationTotal": 997
+              },
+              "total": 2196
+            },
+            {
+              "id": "13",
+              "name": "FC BARCELONA X TRAVIS SCOTT LIMITED EDITION JERSEY",
+              "image": "/images/fcb-cj.png",
+              "price": 1898,
+              "priceString": "₹1,898.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "FC BARCELONA",
+              "league": "LALIGA",
+              "customizationData": {
+                "playerName": "",
+                "playerNumber": "",
+                "patch": {
+                  "id": "champions-league",
+                  "name": "Champions League",
+                  "price": 299,
+                  "image": "/images/patches/champions-league-badge.webp"
+                },
+                "customizationTotal": 299
+              },
+              "total": 1898
+            },
+            {
+              "id": "11",
+              "name": "Bayern Munich 125th Anniversary Special Edition Jersey",
+              "image": "/images/bayern-125.webp",
+              "price": 2298,
+              "priceString": "₹2,298.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "BAYERN MUNCHEN",
+              "league": "BUNDESLIGA",
+              "customizationData": {
+                "playerName": "",
+                "playerNumber": "",
+                "patch": {
+                  "id": "bundesliga",
+                  "name": "Bundesliga",
+                  "price": 299,
+                  "image": "/images/patches/bundesliga-badge.webp"
+                },
+                "customizationTotal": 299
+              },
+              "total": 2298
+            }
+          ],
+          "subtotal": 6392,
+          "discount": 2237.2,
+          "couponDiscount": 2237.2,
+          "total": 4164.8,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Imad Manzil , Azad Nagar , Chowki",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": "Near Daffodil Hills"
+          },
+          "couponApplied": "NEWYEAR2026",
+          "codCharges": 10,
+          "trackingNumber": "TRK650881342",
+          "addressSource": "saved_address"
         }
       ],
       "phone": "7736919863",
       "fullName": "Ahmed Irfad",
-      "dateOfBirth": "2005-02-05"
+      "dateOfBirth": "2005-02-05",
+      "isBlocked": false,
+      "blockedAt": null,
+      "blockedBy": null
     },
     {
       "id": "1764150947274",
@@ -214,7 +489,7 @@
           "username": "Azeem",
           "userEmail": "azeeym4@gmail.com",
           "date": "2025-12-09T04:56:37.687Z",
-          "status": "Processing",
+          "status": "Delivered",
           "items": [
             {
               "id": "1765194001359",
@@ -434,6 +709,180 @@
       "phone": "7736919863",
       "fullName": "CEO DRIBBLEFIT",
       "dateOfBirth": "2005-02-05"
+    },
+    {
+      "id": "1766998753084",
+      "username": "Shehza",
+      "email": "shehza30@gmail.com",
+      "password": "Shehza@123",
+      "role": "user",
+      "isBlocked": false,
+      "cart": [],
+      "addresses": [
+        {
+          "name": "Kadeeja Shehza",
+          "phone": "7736978186",
+          "address": "Arikady, Kumbla, Kasaragod",
+          "city": "Kasaragod",
+          "state": "Kerala",
+          "pincode": "671124",
+          "landmark": "",
+          "isDefault": true
+        }
+      ],
+      "orders": [
+        {
+          "id": "1766998905449",
+          "orderNumber": "ORD-98905449",
+          "userId": "1766998753084",
+          "username": "Shehza",
+          "userEmail": "shehza30@gmail.com",
+          "date": "2025-12-29T09:01:45.449Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
+              "price": 1796,
+              "priceString": "₹1,796.00",
+              "size": "M",
+              "quantity": 1,
+              "team": "AS ROMA",
+              "league": "SERIE A",
+              "customizationData": {
+                "playerName": "SHEHZA",
+                "playerNumber": "7",
+                "patch": {
+                  "id": "champions-league",
+                  "name": "Champions League",
+                  "price": 299,
+                  "image": "/images/patches/champions-league-badge.webp"
+                },
+                "customizationTotal": 897
+              },
+              "total": 1796
+            },
+            {
+              "id": "9",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 2896,
+              "priceString": "₹2,896.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "AJAX ",
+              "league": "EREDIVISIE",
+              "customizationData": {
+                "playerName": "IRFAD",
+                "playerNumber": "10",
+                "patch": {
+                  "id": "eredivisie",
+                  "name": "Eredivisie",
+                  "price": 299,
+                  "image": "/images/patches/eredivisie-badge.jpg"
+                },
+                "customizationTotal": 897
+              },
+              "total": 2896
+            },
+            {
+              "id": "18",
+              "name": "Al-Nassr FC 2025/26 Home Jersey",
+              "image": "/images/alnassr-home.jpg",
+              "price": 1099,
+              "priceString": "₹1,099.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "AL NASSR",
+              "league": "SAUDI PRO LEAGUE",
+              "customizationData": null,
+              "total": 1099
+            }
+          ],
+          "subtotal": 5791,
+          "discount": 2026.85,
+          "couponDiscount": 2026.85,
+          "total": 3774.15,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Kadeeja Shehza",
+            "email": "shehza30@gmail.com",
+            "phone": "7736978186",
+            "address": "Arikady, Kumbla, Kasaragod",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": ""
+          },
+          "couponApplied": "NEWYEAR2026",
+          "codCharges": 10,
+          "trackingNumber": "TRK889376858",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1766999675238",
+          "orderNumber": "ORD-99675236",
+          "userId": "1766998753084",
+          "username": "Shehza",
+          "userEmail": "shehza30@gmail.com",
+          "date": "2025-12-29T09:14:35.238Z",
+          "status": "Cancelled",
+          "items": [
+            {
+              "id": "3",
+              "name": "Juventus FC 2025/26 Third Kit",
+              "image": "/images/juv-third1.webp",
+              "price": 999,
+              "priceString": "₹999.00",
+              "size": "M",
+              "quantity": 1,
+              "team": "JUVENTUS",
+              "league": "SERIE A",
+              "customizationData": null,
+              "total": 999
+            },
+            {
+              "id": "4",
+              "name": "Argentina 2025 Home Kit",
+              "image": "/images/arg-home.webp",
+              "price": 1199,
+              "priceString": "₹1,199.00",
+              "size": "S",
+              "quantity": 1,
+              "team": "ARGENTINA",
+              "league": "",
+              "customizationData": null,
+              "total": 1199
+            }
+          ],
+          "subtotal": 2198,
+          "discount": 0,
+          "couponDiscount": 0,
+          "total": 2208,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Kadeeja Shehza",
+            "email": "shehza30@gmail.com",
+            "phone": "7736978186",
+            "address": "Arikady, Kumbla, Kasaragod",
+            "city": "Kasaragod",
+            "state": "Kerala",
+            "pincode": "671124",
+            "landmark": ""
+          },
+          "couponApplied": null,
+          "codCharges": 10,
+          "trackingNumber": "TRK661293183",
+          "addressSource": "saved_address"
+        }
+      ],
+      "phone": "7736978186",
+      "fullName": "Kadeeja Shehza",
+      "dateOfBirth": "2009-11-20",
+      "createdAt": "2025-12-29T08:59:13.084Z",
+      "blockedAt": null,
+      "blockedBy": null
     }
   ],
   "products": [
@@ -566,7 +1015,7 @@
       "league": "SERIE A"
     },
     {
-      "id": "1765028426181",
+      "id": "8",
       "name": "Portugal Black Panther Kit",
       "price": "₹1,199",
       "originalPrice": "₹1,499",
@@ -584,7 +1033,7 @@
       "featured": false
     },
     {
-      "id": "1765171934138",
+      "id": "9",
       "name": "Ajax 125th Anniversary Special Jersey",
       "price": "₹1,999",
       "image": "/images/ajax-125.webp",
@@ -601,7 +1050,7 @@
       "featured": false
     },
     {
-      "id": "1765192525494",
+      "id": "10",
       "name": "Aston Villa 2025/26 Away Jersey",
       "price": "₹799",
       "originalPrice": "₹999",
@@ -619,7 +1068,7 @@
       "featured": false
     },
     {
-      "id": "1765192693317",
+      "id": "11",
       "name": "Bayern Munich 125th Anniversary Special Edition Jersey",
       "price": "₹1,999",
       "image": "/images/bayern-125.webp",
@@ -635,7 +1084,7 @@
       "featured": false
     },
     {
-      "id": "1765192911382",
+      "id": "12",
       "name": "Belgium 2024/25 Away Jersey",
       "price": "₹999",
       "image": "/images/belgium-away.webp",
@@ -651,7 +1100,7 @@
       "featured": false
     },
     {
-      "id": "1765193015336",
+      "id": "13",
       "name": "FC BARCELONA X TRAVIS SCOTT LIMITED EDITION JERSEY",
       "price": "₹1,599",
       "originalPrice": "₹1,499",
@@ -662,16 +1111,17 @@
       "league": "LALIGA",
       "description": "A masterpiece born from the world of football and hip-hop culture, the FC Barcelona x Travis Scott Jersey brings bold design with signature Cactus Jack energy. This limited-edition piece blends the club’s iconic blaugrana colors with Travis Scott’s dark, flame-driven aesthetic.",
       "sizes": [
-        "S",
-        "M",
         "L",
-        "XL"
+        "M",
+        "S",
+        "XL",
+        "XXL"
       ],
       "inStock": true,
       "featured": false
     },
     {
-      "id": "1765193143614",
+      "id": "14",
       "name": "Liverpool 2025/26 Third Jersey",
       "price": "₹1,199",
       "image": "/images/liv-third.webp",
@@ -687,7 +1137,7 @@
       "featured": false
     },
     {
-      "id": "1765193336635",
+      "id": "15",
       "name": "South Korea 2024/25 Home Jersey",
       "price": "₹799",
       "image": "/images/korea-away.webp",
@@ -704,7 +1154,7 @@
       "featured": false
     },
     {
-      "id": "1765193659431",
+      "id": "16",
       "name": "Germany 2024/25 Away Jersey",
       "price": "₹999",
       "image": "/images/germany-away.webp",
@@ -720,7 +1170,7 @@
       "featured": false
     },
     {
-      "id": "1765193860288",
+      "id": "17",
       "name": "FC Barcelona 2024/25 Blue Anthem Jacket",
       "price": "₹3,099",
       "originalPrice": "₹3,599",
@@ -740,7 +1190,7 @@
       "featured": false
     },
     {
-      "id": "1765194001359",
+      "id": "18",
       "name": "Al-Nassr FC 2025/26 Home Jersey",
       "price": "₹1,099",
       "image": "/images/alnassr-home.jpg",
@@ -759,7 +1209,7 @@
       "featured": false
     },
     {
-      "id": "1765194218430",
+      "id": "19",
       "name": "AC Milan 125th Anniversary Special Jersey",
       "price": "₹1,999",
       "image": "/images/ac-125.webp",
@@ -775,7 +1225,7 @@
       "featured": false
     },
     {
-      "id": "1765194480126",
+      "id": "20",
       "name": "Manchester United 2025/26 Away Jersey",
       "price": "₹999",
       "image": "/images/utd-away.webp",
@@ -789,6 +1239,25 @@
         "S"
       ],
       "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "21",
+      "name": "Real Madrid Dragon Special Edition ",
+      "price": "₹1,199",
+      "originalPrice": "₹2,099",
+      "discount": "40% OFF",
+      "image": "/images/realxy3.webp",
+      "category": "2025-26-season-kits",
+      "team": "Real Madrid",
+      "league": "LaLiga",
+      "description": "Step into a bold fusion of football heritage and high-fashion design with the Real Madrid Y-3 Special Edition Jersey. Designed in collaboration with Y-3, this jersey redefines modern sportswear with a sleek, artistic edge.\n\nCrafted in a deep midnight purple tone, the jersey features subtle graphic textures inspired by contemporary art, giving it a futuristic yet elegant look. The iconic Real Madrid crest sits proudly on the chest, paired with the Emirates Fly Better sponsor branding and Y-3 logo, symbolizing innovation and excellence.\n\nMade from lightweight, breathable fabric, it ensures all-day comfort whether you’re on the pitch, at the stadium, or styling it casually. This jersey isn’t just matchwear—it’s a statement piece for true Madridistas and fashion-forward fans.",
+      "sizes": [
+        "S",
+        "XL",
+        "XXL"
+      ],
+      "inStock": false,
       "featured": false
     }
   ]

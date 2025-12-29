@@ -169,6 +169,44 @@ const OrderManagement = () => {
     }
   }
 
+  // Helper function to check if order has any customization
+  const hasCustomizationInOrder = (order) => {
+    return order.items?.some(item => 
+      item.customizationData && (
+        item.customizationData.playerName || 
+        item.customizationData.playerNumber || 
+        item.customizationData.patches?.length > 0 ||
+        item.customizationData.patch
+      )
+    )
+  }
+
+  // Helper function to format price
+  const formatPrice = (amount) => {
+    if (typeof amount === 'number') {
+      return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    }
+    if (typeof amount === 'string') {
+      // Handle string prices that might already have ₹ symbol
+      return amount.includes('₹') ? amount : `₹${amount}`
+    }
+    return '₹0.00'
+  }
+
+  // Helper function to get item display price
+  const getItemDisplayPrice = (item) => {
+    if (item.priceString) {
+      return item.priceString
+    }
+    if (item.price) {
+      if (typeof item.price === 'string') {
+        return item.price
+      }
+      return formatPrice(item.price)
+    }
+    return formatPrice(0)
+  }
+
   const statusOptions = [
     { value: 'all', label: 'All Status' },
     { value: 'Processing', label: 'Processing' },
@@ -305,10 +343,18 @@ const OrderManagement = () => {
                         <p className="text-white">{formatDate(order.date)}</p>
                       </td>
                       <td className="p-4">
-                        <p className="text-white">{order.items?.length || 0} items</p>
+                        <div className="space-y-1">
+                          <p className="text-white">{order.items?.length || 0} items</p>
+                          {/* Show "Customized" badge only once per order if any item has customization */}
+                          {hasCustomizationInOrder(order) && (
+                            <span className="inline-block px-2 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-md border border-[#00ff00]/20">
+                              Customized
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
-                        <p className="text-[#00ff00] font-bold">₹{parseFloat(order.total).toFixed(2)}</p>
+                        <p className="text-[#00ff00] font-bold">{formatPrice(order.total)}</p>
                       </td>
                       <td className="p-4">
                         <select
@@ -386,11 +432,17 @@ const OrderManagement = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-gray-400 text-sm">Items</p>
-                    <p className="text-white text-sm">{order.items?.length || 0} items</p>
+                    <div className="text-right">
+                      <p className="text-white text-sm">{order.items?.length || 0} items</p>
+                      {/* Show "Customized" only once per order in mobile view */}
+                      {hasCustomizationInOrder(order) && (
+                        <p className="text-[#00ff00] text-xs mt-1">Customized</p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <p className="text-gray-400 text-sm">Total</p>
-                    <p className="text-[#00ff00] font-bold text-sm">₹{parseFloat(order.total).toFixed(2)}</p>
+                    <p className="text-[#00ff00] font-bold text-sm">{formatPrice(order.total)}</p>
                   </div>
                 </div>
 
@@ -472,20 +524,74 @@ const OrderManagement = () => {
                     <h4 className="text-lg font-bold text-white mb-4">Order Items</h4>
                     <div className="space-y-4">
                       {selectedOrder.items?.map((item, index) => (
-                        <div key={index} className="flex items-center space-x-4">
-                          <div className="w-16 h-16 bg-[#2a2a2a] rounded-lg overflow-hidden flex-shrink-0">
-                            <img 
-                              src={item.image} 
-                              alt={item.name}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-white font-medium">{item.name}</p>
-                            <p className="text-gray-400 text-sm">
-                              Size: {item.size} • Qty: {item.quantity} • {item.team}
-                            </p>
-                            <p className="text-[#00ff00] font-bold">{item.price}</p>
+                        <div key={index} className="bg-[#2a2a2a] rounded-lg p-4">
+                          <div className="flex items-start space-x-4">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                              <img 
+                                src={item.image} 
+                                alt={item.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="text-white font-medium">{item.name}</p>
+                                  <p className="text-gray-400 text-sm">
+                                    Size: {item.size} • Qty: {item.quantity} • {item.team}
+                                  </p>
+                                  <p className="text-[#00ff00] font-bold text-sm mt-1">
+                                    {getItemDisplayPrice(item)} × {item.quantity} = {formatPrice(item.total || 0)}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              {/* Customization Details */}
+                              {item.customizationData && (
+                                <div className="mt-3 pt-3 border-t border-gray-700">
+                                  <p className="text-[#00ff00] text-sm font-semibold mb-2">Customization Details:</p>
+                                  <div className="space-y-2">
+                                    {item.customizationData?.playerName && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-400">Player Name:</span>
+                                        <span className="text-white font-medium">{item.customizationData.playerName.toUpperCase()}</span>
+                                      </div>
+                                    )}
+                                    {item.customizationData?.playerNumber && (
+                                      <div className="flex justify-between text-sm">
+                                        <span className="text-gray-400">Player Number:</span>
+                                        <span className="text-white font-medium">#{item.customizationData.playerNumber}</span>
+                                      </div>
+                                    )}
+                                    {(item.customizationData?.patch || item.customizationData?.patches?.length > 0) && (
+                                      <div>
+                                        <p className="text-gray-400 text-sm mb-1">Patches:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {item.customizationData.patch && (
+                                            <span className="px-2 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-md border border-[#00ff00]/20">
+                                              {item.customizationData.patch.name} (+{formatPrice(item.customizationData.patch.price)})
+                                            </span>
+                                          )}
+                                          {item.customizationData.patches?.map((patch, idx) => (
+                                            <span key={idx} className="px-2 py-1 bg-[#00ff00]/10 text-[#00ff00] text-xs rounded-md border border-[#00ff00]/20">
+                                              {patch.name} (+{formatPrice(patch.price)})
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {item.customizationData?.customizationTotal > 0 && (
+                                      <div className="flex justify-between text-sm pt-2 border-t border-gray-700">
+                                        <span className="text-gray-400">Customization Total:</span>
+                                        <span className="text-[#00ff00] font-bold">
+                                          +{formatPrice(item.customizationData.customizationTotal)}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -555,25 +661,25 @@ const OrderManagement = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-gray-400">Subtotal</span>
-                        <span className="text-white">₹{parseFloat(selectedOrder.subtotal).toFixed(2)}</span>
+                        <span className="text-white">{formatPrice(selectedOrder.subtotal)}</span>
                       </div>
                       {selectedOrder.couponApplied && (
                         <div className="flex justify-between">
                           <span className="text-gray-400">Coupon ({selectedOrder.couponApplied})</span>
-                          <span className="text-[#00ff00]">-₹{parseFloat(selectedOrder.couponDiscount).toFixed(2)}</span>
+                          <span className="text-[#00ff00]">-{formatPrice(selectedOrder.couponDiscount)}</span>
                         </div>
                       )}
                       {selectedOrder.codCharges > 0 && (
                         <div className="flex justify-between">
                           <span className="text-gray-400">COD Charges</span>
-                          <span className="text-yellow-400">+₹{selectedOrder.codCharges.toFixed(2)}</span>
+                          <span className="text-yellow-400">+{formatPrice(selectedOrder.codCharges)}</span>
                         </div>
                       )}
                       <div className="border-t border-gray-700 pt-2 mt-2">
                         <div className="flex justify-between">
                           <span className="text-white font-bold">Total</span>
                           <span className="text-[#00ff00] font-bold text-lg">
-                            ₹{parseFloat(selectedOrder.total).toFixed(2)}
+                            {formatPrice(selectedOrder.total)}
                           </span>
                         </div>
                       </div>

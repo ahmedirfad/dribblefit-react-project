@@ -60,7 +60,7 @@ function CouponPage() {
               <div className="flex gap-3 mb-4">
                 <input
                   type="text"
-                  placeholder="Enter DRIBBLEFIT20"
+                  placeholder="Enter Valid Coupon"
                   value={couponCode}
                   onChange={(e) => setCouponCode(e.target.value)}
                   className="flex-1 bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] placeholder-gray-500 text-lg"

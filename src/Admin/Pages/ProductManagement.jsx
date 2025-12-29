@@ -1,42 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import api from '../../Api/Axios'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 const ProductManagement = () => {
-  const location = useLocation()
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
   const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
-  const [showModal, setShowModal] = useState(false)
-  const [editingProduct, setEditingProduct] = useState(null)
-  const [formData, setFormData] = useState({
-    name: '',
-    price: '',
-    originalPrice: '',
-    discount: '',
-    image: '',
-    category: '2025-26-season-kits',
-    team: '',
-    league: '',
-    description: '',
-    sizes: ['S', 'M', 'L', 'XL'],
-    inStock: true,
-    featured: false
-  })
-  const [imagePreview, setImagePreview] = useState('')
-
-  useEffect(() => {
-    // Check if URL has action=add parameter
-    const params = new URLSearchParams(location.search)
-    if (params.get('action') === 'add') {
-      handleAddProduct()
-      // Clean up the URL
-      navigate('/admin/products', { replace: true })
-    }
-  }, [location.search])
+  
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(9)
 
   useEffect(() => {
     fetchProducts()
@@ -44,62 +19,68 @@ const ProductManagement = () => {
 
   useEffect(() => {
     filterProducts()
+    setCurrentPage(1)
   }, [products, searchTerm, selectedCategory])
 
-  // Helper function to get image URL
+  // ✅ UPDATED IMAGE FUNCTION - More robust
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/150?text=No+Image'
-    
-    // If it's already a full URL
+    if (!imagePath || imagePath.trim() === '') {
+      return 'https://via.placeholder.com/300x400?text=No+Image'
+    }
+
+    // Already absolute URL - return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath
     }
-    
-    // If it's a local path starting with / or ./
-    if (imagePath.startsWith('/') || imagePath.startsWith('./')) {
-      return `http://localhost:5173${imagePath.startsWith('/') ? imagePath : imagePath.substring(1)}`
-    }
-    
-    return imagePath
-  }
 
-  // Update image preview when form image changes
-  useEffect(() => {
-    if (formData.image) {
-      setImagePreview(getImageUrl(formData.image))
-    } else {
-      setImagePreview('')
+    // Handle relative paths
+    let cleanPath = imagePath
+    
+    // Remove "./" if present
+    if (cleanPath.startsWith('./')) {
+      cleanPath = cleanPath.substring(2)
     }
-  }, [formData.image])
+    
+    // Remove leading "/" if present (we'll add it properly)
+    if (cleanPath.startsWith('/')) {
+      cleanPath = cleanPath.substring(1)
+    }
+
+    // Get base URL from axios config
+    const baseURL = api.defaults.baseURL || ''
+    
+    // Ensure proper URL construction
+    if (baseURL && !baseURL.endsWith('/')) {
+      return `${baseURL}/${cleanPath}`
+    }
+    
+    return `${baseURL}${cleanPath}`
+  }
 
   const fetchProducts = async () => {
     try {
       const response = await api.get('/products')
-      
-      // Log the response to debug
-      console.log('Products API Response:', response)
-      
-      // Handle different response structures
       const productsData = response.data || response || []
       
+      let productsArray = []
       if (Array.isArray(productsData)) {
-        setProducts(productsData)
+        productsArray = productsData
       } else if (productsData.products) {
-        setProducts(productsData.products)
+        productsArray = productsData.products
       } else if (productsData.data) {
-        setProducts(productsData.data)
+        productsArray = productsData.data
       } else {
-        console.error('Unexpected products response structure:', productsData)
-        setProducts([])
+        productsArray = []
       }
+      
+      console.log('Fetched products:', productsArray)
+      console.log('Sample image path:', productsArray[0]?.image)
+      console.log('Generated image URL:', getImageUrl(productsArray[0]?.image))
+      
+      setProducts(productsArray)
     } catch (error) {
       console.error('Error fetching products:', error)
-      // Show error to user
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-      notification.textContent = 'Failed to load products. Check console.'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 3000)
+      showNotification('Failed to load products', 'error')
       setProducts([])
     } finally {
       setLoading(false)
@@ -121,157 +102,68 @@ const ProductManagement = () => {
     }
 
     setFilteredProducts(filtered)
-    console.log('Filtered products:', filtered.length, 'from total:', products.length)
+  }
+
+  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
+  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
+
+  const getPageNumbers = () => {
+    const pageNumbers = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i)
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pageNumbers.push(i)
+        pageNumbers.push('...')
+        pageNumbers.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1)
+        pageNumbers.push('...')
+        for (let i = totalPages - 3; i <= totalPages; i++) pageNumbers.push(i)
+      } else {
+        pageNumbers.push(1)
+        pageNumbers.push('...')
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pageNumbers.push(i)
+        pageNumbers.push('...')
+        pageNumbers.push(totalPages)
+      }
+    }
+    
+    return pageNumbers
   }
 
   const handleDeleteProduct = async (productId) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) {
-      return
-    }
+    if (!window.confirm('Are you sure you want to delete this product?')) return
 
     try {
       await api.delete(`/products/${productId}`)
       setProducts(products.filter(product => product.id !== productId))
-
-      // Show success notification
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-      notification.textContent = 'Product deleted successfully!'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 3000)
+      showNotification('Product deleted successfully!', 'success')
     } catch (error) {
       console.error('Error deleting product:', error)
-
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-      notification.textContent = 'Failed to delete product'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 3000)
+      showNotification('Failed to delete product', 'error')
     }
+  }
+
+  const handleViewProduct = (product) => {
+    navigate(`/admin/products/${product.id}`)
   }
 
   const handleEditProduct = (product) => {
-    console.log('Editing product:', product)
-    setEditingProduct(product)
-    setFormData({
-      name: product.name || '',
-      price: product.price ? product.price.replace('₹', '').replace(/,/g, '') : '',
-      originalPrice: product.originalPrice ? product.originalPrice.replace('₹', '').replace(/,/g, '') : '',
-      discount: product.discount ? product.discount.replace('% OFF', '') : '',
-      image: product.image || '',
-      category: product.category || '2025-26-season-kits',
-      team: product.team || '',
-      league: product.league || '',
-      description: product.description || '',
-      sizes: product.sizes || ['S', 'M', 'L', 'XL'],
-      inStock: product.inStock !== undefined ? product.inStock : true,
-      featured: product.featured || false
-    })
-    setShowModal(true)
+    navigate(`/admin/products/edit/${product.id}`)
   }
 
-  const handleAddProduct = () => {
-    setEditingProduct(null)
-    setFormData({
-      name: '',
-      price: '',
-      originalPrice: '',
-      discount: '',
-      image: '',
-      category: '2025-26-season-kits',
-      team: '',
-      league: '',
-      description: '',
-      sizes: ['S', 'M', 'L', 'XL'],
-      inStock: true,
-      featured: false
-    })
-    setImagePreview('')
-    setShowModal(true)
-  }
-
-  const handleImageChange = (e) => {
-    const value = e.target.value
-    // Normalize backslashes to forward slashes
-    const normalizedValue = value.replace(/\\/g, '/')
-    setFormData({ ...formData, image: normalizedValue })
-  }
-
-  const isValidImageUrl = (url) => {
-    if (!url) return true // Allow empty for preview purposes
-    
-    // Accept any string as valid - let the browser handle invalid URLs
-    // We'll use onError handlers to show fallback images
-    return true
-  }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    // Basic validation
-    if (!formData.name.trim()) {
-      alert('Product name is required')
-      return
-    }
-
-    if (!formData.price) {
-      alert('Price is required')
-      return
-    }
-
-    if (!formData.image.trim()) {
-      alert('Image URL is required')
-      return
-    }
-
-    try {
-      const productData = {
-        ...formData,
-        price: `₹${parseInt(formData.price || 0).toLocaleString('en-IN')}`,
-        originalPrice: formData.originalPrice ? `₹${parseInt(formData.originalPrice).toLocaleString('en-IN')}` : undefined,
-        discount: formData.discount ? `${formData.discount}% OFF` : undefined
-      }
-
-      if (editingProduct) {
-        // Update existing product
-        await api.patch(`/products/${editingProduct.id}`, productData)
-        setProducts(products.map(p =>
-          p.id === editingProduct.id ? { ...p, ...productData } : p
-        ))
-
-        // Show success notification
-        const notification = document.createElement('div')
-        notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-        notification.textContent = 'Product updated successfully!'
-        document.body.appendChild(notification)
-        setTimeout(() => notification.remove(), 3000)
-      } else {
-        // Create new product
-        const newProduct = {
-          ...productData,
-          id: Date.now().toString()
-        }
-        await api.post('/products', newProduct)
-        setProducts([...products, newProduct])
-
-        // Show success notification
-        const notification = document.createElement('div')
-        notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-        notification.textContent = 'Product added successfully!'
-        document.body.appendChild(notification)
-        setTimeout(() => notification.remove(), 3000)
-      }
-
-      setShowModal(false)
-    } catch (error) {
-      console.error('Error saving product:', error)
-
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-      notification.textContent = 'Failed to save product'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 3000)
-    }
+  const showNotification = (message, type = 'success') => {
+    const notification = document.createElement('div')
+    notification.className = `fixed top-4 right-4 ${
+      type === 'success' ? 'bg-[#00ff00] text-black' : 'bg-red-500 text-white'
+    } font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce`
+    notification.textContent = message
+    document.body.appendChild(notification)
+    setTimeout(() => notification.remove(), 3000)
   }
 
   const categories = [
@@ -293,6 +185,11 @@ const ProductManagement = () => {
     return names[category] || category
   }
 
+  const indexOfLastItem = currentPage * itemsPerPage
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage
+  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -300,11 +197,10 @@ const ProductManagement = () => {
       </div>
     )
   }
-
+  
   return (
     <div className="space-y-6 p-4">
-
-      {/* Header */}
+      {/* Header and Search */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Product Management</h1>
@@ -323,15 +219,15 @@ const ProductManagement = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          <button
-            onClick={handleAddProduct}
+          <Link
+            to="/admin/products/add"
             className="bg-[#00ff00] text-black font-bold px-4 py-2 rounded-lg hover:bg-[#00ff00]/90 transition-colors flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Add Product
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -353,6 +249,7 @@ const ProductManagement = () => {
           onClick={() => {
             setSearchTerm('')
             setSelectedCategory('all')
+            setCurrentPage(1)
           }}
           className="px-4 py-2 border border-gray-700 text-gray-400 rounded-lg hover:border-[#00ff00] hover:text-[#00ff00] transition-colors text-sm"
         >
@@ -388,22 +285,27 @@ const ProductManagement = () => {
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProducts.length > 0 ? (
-          filteredProducts.map((product) => (
+        {currentProducts.length > 0 ? (
+          currentProducts.map((product) => (
             <div
               key={product.id}
-              className="bg-[#111111] border border-[#00ff00]/20 rounded-xl overflow-hidden hover:border-[#00ff00]/40 transition-colors"
+              className="bg-[#111111] border border-[#00ff00]/20 rounded-xl overflow-hidden hover:border-[#00ff00]/40 transition-colors group"
             >
-              {/* Product Image */}
-              <div className="relative h-48 bg-[#1a1a1a] overflow-hidden">
+              {/* Product Image - UPDATED: Removed hover overlay */}
+              <div 
+                className="relative h-48 bg-[#1a1a1a] overflow-hidden cursor-pointer"
+                onClick={() => handleViewProduct(product)}
+              >
                 <img
                   src={getImageUrl(product.image)}
                   alt={product.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    console.error('Image failed to load:', product.image)
+                    console.error('Image failed to load:', product.image, 'Generated URL:', getImageUrl(product.image))
                     e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found'
+                    e.target.className = 'w-full h-full object-contain bg-[#1a1a1a] p-4'
                   }}
+                  onLoad={() => console.log('Image loaded successfully:', getImageUrl(product.image))}
                 />
                 <div className="absolute top-3 right-3 flex gap-2">
                   {product.featured && (
@@ -436,9 +338,12 @@ const ProductManagement = () => {
                 </div>
 
                 <div className="text-gray-400 text-sm mb-4">
-                  <p>
+                  <p className="line-clamp-1">
                     {product.team || 'No team'} 
                     {product.league && ` • ${product.league}`}
+                  </p>
+                  <p className="mt-1">
+                    ID: <span className="text-white font-mono">{product.id}</span>
                   </p>
                   <p className="mt-1">
                     Sizes: {product.sizes?.join(', ') || 'N/A'}
@@ -447,6 +352,16 @@ const ProductManagement = () => {
 
                 {/* Action Buttons */}
                 <div className="flex gap-2">
+                  <button
+                    onClick={() => handleViewProduct(product)}
+                    className="flex-1 bg-[#00ff00]/20 text-[#00ff00] py-2 rounded-lg hover:bg-[#00ff00]/30 transition-colors text-sm flex items-center justify-center gap-1"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    View
+                  </button>
                   <button
                     onClick={() => handleEditProduct(product)}
                     className="flex-1 bg-blue-500/20 text-blue-400 py-2 rounded-lg hover:bg-blue-500/30 transition-colors text-sm flex items-center justify-center gap-1"
@@ -481,222 +396,55 @@ const ProductManagement = () => {
         )}
       </div>
 
-      {/* Add/Edit Product Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-[#111111] border border-[#00ff00]/20 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white">
-                  {editingProduct ? 'Edit Product' : 'Add New Product'}
-                </h3>
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="text-gray-400 hover:text-white"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+      {/* Pagination */}
+      {filteredProducts.length > itemsPerPage && ( 
+        <div className="flex items-center justify-center space-x-2 py-6">
+          <button
+            onClick={prevPage}
+            disabled={currentPage === 1}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1 ${
+              currentPage === 1
+                ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                : 'bg-[#1a1a1a] text-white hover:bg-[#00ff00] hover:text-black transition-colors'
+            }`}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Previous
+          </button>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Image Preview */}
-                {imagePreview && (
-                  <div className="mb-4">
-                    <p className="text-gray-400 text-sm mb-2">Image Preview:</p>
-                    <div className="w-32 h-32 bg-[#1a1a1a] rounded-lg overflow-hidden mx-auto">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL'
-                        }}
-                      />
-                    </div>
-                  </div>
-                )}
+          {getPageNumbers().map((pageNumber, index) => (
+            <button
+              key={index}
+              onClick={() => typeof pageNumber === 'number' ? paginate(pageNumber) : null}
+              className={`px-3 py-2 rounded-lg min-w-[40px] ${
+                pageNumber === currentPage
+                  ? 'bg-[#00ff00] text-black font-bold'
+                  : typeof pageNumber === 'number'
+                  ? 'bg-[#1a1a1a] text-white hover:bg-[#00ff00]/20 transition-colors'
+                  : 'bg-transparent text-gray-500 cursor-default'
+              }`}
+              disabled={typeof pageNumber !== 'number'}
+            >
+              {pageNumber}
+            </button>
+          ))}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Product Name *</label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Price (₹) *</label>
-                    <input
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                      min="0"
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Original Price (₹)</label>
-                    <input
-                      type="number"
-                      value={formData.originalPrice}
-                      onChange={(e) => setFormData({ ...formData, originalPrice: e.target.value })}
-                      min="0"
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Discount (%)</label>
-                    <input
-                      type="number"
-                      value={formData.discount}
-                      onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
-                      min="0"
-                      max="100"
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Category *</label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      required
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    >
-                      <option value="2025-26-season-kits">2025/26 Season Kits</option>
-                      <option value="international-kits">International Kits</option>
-                      <option value="retro-jerseys">Retro Jerseys</option>
-                      <option value="anthem-jackets">Anthem Jackets</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Team *</label>
-                    <input
-                      type="text"
-                      value={formData.team}
-                      onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                      required
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">League</label>
-                    <input
-                      type="text"
-                      value={formData.league}
-                      onChange={(e) => setFormData({ ...formData, league: e.target.value })}
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-gray-400 text-sm mb-2">Image URL *</label>
-                    <input
-                      type="text"
-                      value={formData.image}
-                      onChange={handleImageChange}
-                      required
-                      placeholder="Paste URL or enter local path like /images/..."
-                      className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-                    />
-                    <p className="text-gray-500 text-xs mt-1">
-                      Supports: Local paths (/images/...) or URLs (https://...)
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Sizes *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['S', 'M', 'L', 'XL', 'XXL'].map((size) => (
-                      <button
-                        key={size}
-                        type="button"
-                        onClick={() => {
-                          const newSizes = formData.sizes.includes(size)
-                            ? formData.sizes.filter(s => s !== size)
-                            : [...formData.sizes, size]
-                          setFormData({ ...formData, sizes: newSizes.sort() })
-                        }}
-                        className={`px-3 py-1 rounded-lg transition-colors ${formData.sizes.includes(size)
-                            ? 'bg-[#00ff00] text-black'
-                            : 'bg-[#1a1a1a] text-gray-400 border border-gray-700'
-                          }`}
-                      >
-                        {size}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-gray-400 text-sm mb-2">Description *</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    required
-                    rows="4"
-                    className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00] resize-none"
-                  />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.inStock}
-                        onChange={(e) => setFormData({ ...formData, inStock: e.target.checked })}
-                        className="w-4 h-4 text-[#00ff00] bg-[#1a1a1a] border-gray-700 rounded focus:ring-[#00ff00] focus:ring-2"
-                      />
-                      <span className="text-gray-400 text-sm">In Stock</span>
-                    </label>
-
-                    <label className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.featured}
-                        onChange={(e) => setFormData({ ...formData, featured: e.target.checked })}
-                        className="w-4 h-4 text-[#00ff00] bg-[#1a1a1a] border-gray-700 rounded focus:ring-[#00ff00] focus:ring-2"
-                      />
-                      <span className="text-gray-400 text-sm">Featured Product</span>
-                    </label>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowModal(false)}
-                      className="px-4 py-2 border border-gray-700 text-gray-400 rounded-lg hover:border-[#00ff00] hover:text-[#00ff00] transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-[#00ff00] text-black font-bold px-4 py-2 rounded-lg hover:bg-[#00ff00]/90 transition-colors flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                      </svg>
-                      {editingProduct ? 'Update Product' : 'Add Product'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-            </div>
-          </div>
+          <button
+            onClick={nextPage}
+            disabled={currentPage === totalPages}
+            className={`px-3 py-2 rounded-lg flex items-center gap-1 ${
+              currentPage === totalPages
+                ? 'bg-[#1a1a1a] text-gray-600 cursor-not-allowed'
+                : 'bg-[#1a1a1a] text-white hover:bg-[#00ff00] hover:text-black transition-colors'
+            }`}
+          >
+            Next
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       )}
     </div>

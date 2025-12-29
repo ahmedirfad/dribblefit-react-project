@@ -67,7 +67,7 @@ function Footer() {
                 <Link to="/contact" className="text-gray-400 hover:text-[#00ff00] transition-colors duration-200 text-sm">Contact Us</Link>
               </li>
               <li>
-                <Link to="/shipping" className="text-gray-400 hover:text-[#00ff00] transition-colors duration-200 text-sm">Shipping Info</Link>
+                <Link to="/shipping-info" className="text-gray-400 hover:text-[#00ff00] transition-colors duration-200 text-sm">Shipping Info</Link>
               </li>
               <li>
                 <Link to="/returns" className="text-gray-400 hover:text-[#00ff00] transition-colors duration-200 text-sm">Returns & Exchanges</Link>

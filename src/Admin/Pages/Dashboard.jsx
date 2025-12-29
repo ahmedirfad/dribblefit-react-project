@@ -22,34 +22,34 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch users
+      // fetch users
       const usersRes = await api.get('/users')
       const users = usersRes.data || []
       
-      // Fetch products
+      // fetch products
       const productsRes = await api.get('/products')
       const products = productsRes.data || []
       
-      // Calculate orders from all users
+      // calculate orders from all users
       const allOrders = users.reduce((acc, user) => {
         return [...acc, ...(user.orders || [])]
       }, [])
       
-      // Calculate revenue
+      // calculate revenue
       const revenue = allOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0)
       
-      // Calculate pending orders
+      // calculate pending orders
       const pendingOrders = allOrders.filter(order => order.status === 'Processing').length
       
-      // Calculate out of stock products
+      // calculate out of stock products
       const outOfStock = products.filter(product => !product.inStock).length
       
-      // Get recent orders
+      // get recent orders
       const sortedOrders = [...allOrders]
         .sort((a, b) => new Date(b.date) - new Date(a.date))
         .slice(0, 5)
       
-      // Get top products
+      // get top products
       const productSales = {}
       allOrders.forEach(order => {
         order.items?.forEach(item => {
@@ -164,7 +164,7 @@ const Dashboard = () => {
   }
 
   const handleAddNewProduct = () => {
-    navigate('/admin/products')
+    navigate('/admin/products/add')
   }
 
   if (loading) {

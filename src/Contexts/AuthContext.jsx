@@ -1,21 +1,19 @@
-// src/Contexts/AuthContext.jsx (FINAL VERSION)
+// src/Contexts/AuthContext.jsx (UPDATED VERSION WITH BLOCKING CHECK)
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import api from '../Api/Axios.jsx'
 
 const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState('')
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [loading, setLoading] = useState(false)
   const [initialLoading, setInitialLoading] = useState(true) 
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // In AuthContext.jsx - Update the checkIsAdmin function
-const checkIsAdmin = (userData) => {
-  // Check both email and role for admin
-  return userData?.email === 'admin@dribblefit.com' || userData?.role === 'admin'
-}
+  const checkIsAdmin = (userData) => {
+    return userData?.email === 'admin@dribblefit.com' || userData?.role === 'admin'
+  }
 
   // checking existing user in localstorage
   useEffect(() => {
@@ -25,6 +23,14 @@ const checkIsAdmin = (userData) => {
     if (savedUser && savedAuth === 'true') {
       try {
         const userData = JSON.parse(savedUser)
+        
+        // NEW: Check if user is blocked when app loads
+        if (userData.isBlocked) {
+          clearAuthData()
+          alert('Your account has been blocked by admin. Please contact support.')
+          return
+        }
+        
         setUser(userData)
         setIsAuthenticated(true)
         
@@ -66,7 +72,8 @@ const checkIsAdmin = (userData) => {
       const newUser = {
         ...userData,
         id: Date.now().toString(),
-        role: 'user', // Default role is user
+        role: 'user',
+        isBlocked: false, // NEW: Ensure new users aren't blocked
         cart: [],
         addresses: [],
         orders: [],
@@ -117,6 +124,14 @@ const checkIsAdmin = (userData) => {
       }
 
       let user = response.data[0]
+      
+      // NEW: Check if user is blocked before allowing login
+      if (user.isBlocked) {
+        return { 
+          success: false, 
+          error: 'Your account has been blocked by admin. Please contact support.' 
+        }
+      }
       
       // Ensure user has required fields
       if (!user.role) user.role = 'user'

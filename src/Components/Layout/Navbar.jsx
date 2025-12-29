@@ -6,7 +6,7 @@ import { useWishlist } from '../../Contexts/WishlistContext'
 import api from '../../Api/Axios.jsx'
 
 function Navbar() {
-  const { user, isAuthenticated, logout } = useAuth()
+  const { user, isAuthenticated, logout, isAdmin } = useAuth()
   const { cartCount } = useCart()
   const { wishlistCount } = useWishlist()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -136,6 +136,11 @@ function Navbar() {
     showToast('Logged out successfully!', 'success')
     logout()
     setIsMenuOpen(false)
+    setShowProfileDropdown(false)
+  }
+
+  const goToAdminPanel = () => {
+    navigate('/admin')
     setShowProfileDropdown(false)
   }
 
@@ -327,7 +332,7 @@ function Navbar() {
                     </svg>
                   </button>
 
-                  {/* UPDATED PROFILE DROPDOWN */}
+                  {/* UPDATED PROFILE DROPDOWN - ADMIN PANEL AT BOTTOM */}
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-64 bg-[#1a1a1a] border border-[#00ff00]/30 rounded-lg shadow-xl z-50 animate-fade-in overflow-hidden">
                       <div className="p-4 border-b border-gray-800 bg-gradient-to-r from-[#0a0a0a] to-[#1a1a1a]">
@@ -340,6 +345,13 @@ function Navbar() {
                               {user.username}
                             </div>
                             <div className="text-gray-400 text-sm truncate">{user.email}</div>
+                            {isAdmin && (
+                              <div className="mt-1">
+                                <span className="bg-gradient-to-r from-[#00ff00] to-emerald-600 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                                  ADMIN
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="text-xs text-gray-500">
@@ -348,6 +360,7 @@ function Navbar() {
                       </div>
                       
                       <div className="py-2">
+                        {/* Regular Account Links */}
                         <Link
                           to="/profile"
                           onClick={() => setShowProfileDropdown(false)}
@@ -391,9 +404,29 @@ function Navbar() {
                           </div>
                         </Link>
                         
+                        {/* ADMIN PANEL - Added as separate section */}
+                        {isAdmin && (
+                          <div className="border-t border-gray-800/50 pt-2">
+                            <button
+                              onClick={goToAdminPanel}
+                              className="w-full flex items-center gap-3 px-4 py-3 text-[#00ff00] hover:bg-[#00ff00]/10 transition-colors duration-200"
+                            >
+                              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              <div className="flex-1 text-left">
+                                <div className="font-medium">Admin Panel</div>
+                                <div className="text-xs text-[#00ff00]/70">Manage your store</div>
+                              </div>
+                            </button>
+                          </div>
+                        )}
+                        
+                        {/* Logout - Bottom of dropdown */}
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors duration-200"
+                          className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors duration-200 border-t border-gray-800/50 mt-2"
                         >
                           <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -525,6 +558,7 @@ function Navbar() {
               <Link to="/contact" className="block text-white hover:text-[#00ff00] transition-colors font-medium" onClick={() => setIsMenuOpen(false)}>
                 Contact Us
               </Link>
+              
               <Link to="/cart" className="block text-white hover:text-[#00ff00] transition-colors font-medium" onClick={() => setIsMenuOpen(false)}>
                 Cart {cartCount > 0 && `(${cartCount})`}
               </Link>
@@ -532,11 +566,16 @@ function Navbar() {
                 Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
               </Link>
               
-              {/* UPDATED MOBILE MENU - ADD ACCOUNT LINKS */}
+              {/* UPDATED MOBILE MENU */}
               {isAuthenticated && user && (
                 <>
                   <div className="pt-4 border-t border-gray-800 text-sm text-gray-300">
                     Welcome, <span className="text-[#00ff00] font-medium">{user.username}</span>
+                    {isAdmin && (
+                      <span className="ml-2 bg-gradient-to-r from-[#00ff00] to-emerald-600 text-black text-xs font-bold px-2 py-0.5 rounded-full">
+                        ADMIN
+                      </span>
+                    )}
                   </div>
                   <div className="pt-4 border-t border-gray-800">
                     <div className="text-sm text-gray-500 mb-2">MY ACCOUNT</div>
@@ -561,9 +600,32 @@ function Navbar() {
                     >
                       My Orders
                     </Link>
+                    
+                    {/* ADMIN PANEL IN MOBILE MENU */}
+                    {isAdmin && (
+                      <button
+                        onClick={() => {
+                          goToAdminPanel()
+                          setIsMenuOpen(false)
+                        }}
+                        className="block w-full text-left mt-4 bg-gradient-to-r from-[#00ff00]/20 to-emerald-600/20 border border-[#00ff00]/30 text-[#00ff00] px-4 py-3 rounded-lg hover:bg-[#00ff00]/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                          <div>
+                            <div className="font-medium">Admin Panel</div>
+                            <div className="text-xs text-[#00ff00]/70">Manage your store</div>
+                          </div>
+                        </div>
+                      </button>
+                    )}
+                    
                     <button
                       onClick={handleLogout}
-                      className="block text-red-400 hover:text-red-300 transition-colors text-sm pl-4 mt-2"
+                      className="block text-red-400 hover:text-red-300 transition-colors text-sm pl-4 mt-4"
                     >
                       Logout
                     </button>

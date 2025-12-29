@@ -31,7 +31,6 @@ function CheckoutPage() {
     } else if (isAuthenticated === true) {
       setCheckingAuth(false)
     }
-    // If isAuthenticated is undefined/null, we're still loading, don't redirect
   }, [isAuthenticated, navigate])
 
   const [state, setState] = useState({
@@ -307,134 +306,185 @@ function CheckoutPage() {
     }, 3000)
   }
 
+  // Function to extract numeric value from price string INCLUDING customization
+  const extractPriceValue = (priceString) => {
+    if (!priceString) return 0;
+    if (typeof priceString === 'number') return priceString;
+    if (typeof priceString === 'string') {
+      // Remove ₹ symbol and commas, then parse
+      const numericString = priceString.replace('₹', '').replace(/,/g, '');
+      const parsedValue = parseFloat(numericString);
+      return isNaN(parsedValue) ? 0 : parsedValue;
+    }
+    return 0;
+  };
+
+  // Get item price including customization
+  const getItemPrice = (item) => {
+    const basePrice = extractPriceValue(item.price);
+    const customizationTotal = item.customizationData?.customizationTotal || 0;
+    return basePrice + customizationTotal;
+  };
+
+  // Get item total (price × quantity)
+  const getItemTotal = (item) => {
+    const itemPrice = getItemPrice(item);
+    const quantity = parseInt(item.quantity) || 1;
+    return itemPrice * quantity;
+  };
+
+  // Format price for display
+  const formatPrice = (amount) => {
+    return `₹${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  // Calculate cart subtotal including customization
+  const calculateSubtotal = () => {
+    return cartItems.reduce((total, item) => total + getItemTotal(item), 0);
+  };
+
+  // Calculate final total with COD charges
+  const calculateFinalTotal = () => {
+    const subtotal = calculateSubtotal();
+    const discount = parseFloat(getCouponDiscount()) || 0;
+    const codCharges = state.selectedPayment === 'cod' ? 10 : 0;
+    const total = subtotal - discount + codCharges;
+    return total;
+  };
+
   const handlePlaceOrder = async () => {
-  const errors = validateForm()
-  
-  if (Object.keys(errors).length > 0) {
-    setState(prev => ({ ...prev, formErrors: errors }))
-    showToast('Please fix the errors in the form', 'error')
-    return
-  }
-  
-  // SHOW PROCESSING SCREEN IMMEDIATELY
-  setIsProcessingOrder(true)
-  
-  // IMPORTANT: Force React to render the processing screen before continuing
-  await new Promise(resolve => setTimeout(resolve, 100))
-  
-  try {
-    const newOrderNumber = `ORD-${Date.now().toString().slice(-8)}`
-    const subtotal = parseFloat(getCartTotal()) || 0
-    const discount = parseFloat(getCouponDiscount()) || 0
-    const codCharges = state.selectedPayment === 'cod' ? 10 : 0
-    const total = subtotal - discount + codCharges
+    const errors = validateForm()
     
-    // SAVE ORDER SUMMARY BEFORE CLEARING CART
-    setOrderSummary({
-      items: [...cartItems], // Copy cart items
-      subtotal: subtotal,
-      discount: discount,
-      total: total,
-      couponDiscount: discount,
-      codCharges: codCharges
-    })
-    
-    // Create order object
-    const orderData = {
-      id: Date.now().toString(),
-      orderNumber: newOrderNumber,
-      userId: user.id,
-      username: user.username,
-      userEmail: user.email,
-      date: new Date().toISOString(),
-      status: 'Processing',
-      items: cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        image: item.image,
-        price: parseFloat(item.price) || 0,
-        size: item.size,
-        quantity: parseInt(item.quantity) || 1,
-        team: item.team,
-        total: (parseFloat(item.price) || 0) * (parseInt(item.quantity) || 1)
-      })),
-      subtotal: subtotal,
-      discount: discount,
-      total: total,
-      paymentMethod: state.selectedPayment,
-      shippingAddress: {
-        ...state.formData,
-        name: state.formData.name || user.username || ''
-      },
-      couponApplied: appliedCoupon?.code || null,
-      couponDiscount: discount,
-      codCharges: codCharges,
-      trackingNumber: `TRK${Math.floor(100000000 + Math.random() * 900000000)}`,
-      addressSource: state.useSavedAddress ? 'saved_address' : 'manual_entry'
+    if (Object.keys(errors).length > 0) {
+      setState(prev => ({ ...prev, formErrors: errors }))
+      showToast('Please fix the errors in the form', 'error')
+      return
     }
     
-    console.log('Order data to save:', orderData)
+    // SHOW PROCESSING SCREEN IMMEDIATELY
+    setIsProcessingOrder(true)
     
-    // ADD ARTIFICIAL DELAY TO SHOW PROCESSING SCREEN (2 seconds)
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // IMPORTANT: Force React to render the processing screen before continuing
+    await new Promise(resolve => setTimeout(resolve, 100))
     
-    // Save order to orders collection
     try {
-      const orderResponse = await api.post('/orders', orderData)
-      console.log('Order saved to /orders:', orderResponse.data)
-    } catch (orderError) {
-      console.warn('Could not save to /orders:', orderError.message)
-    }
-    
-    // Update user's orders
-    const updatedUserOrders = [...(user.orders || []), orderData]
-    try {
-      await api.patch(`/users/${user.id}`, {
-        orders: updatedUserOrders
+      const newOrderNumber = `ORD-${Date.now().toString().slice(-8)}`
+      
+      // Calculate using our helper functions
+      const subtotal = calculateSubtotal();
+      const discount = parseFloat(getCouponDiscount()) || 0;
+      const codCharges = state.selectedPayment === 'cod' ? 10 : 0;
+      const total = subtotal - discount + codCharges;
+      
+      // Create cart items with proper price format
+      const orderItems = cartItems.map(item => {
+        const itemPrice = getItemPrice(item);
+        const quantity = parseInt(item.quantity) || 1;
+        const itemTotal = getItemTotal(item);
+        
+        return {
+          id: item.id,
+          name: item.name,
+          image: item.image,
+          price: itemPrice, // Unit price including customization
+          priceString: formatPrice(itemPrice), // Formatted price string
+          size: item.size,
+          quantity: quantity,
+          team: item.team,
+          league: item.league,
+          customizationData: item.customizationData || null,
+          total: itemTotal
+        };
+      });
+      
+      // SAVE ORDER SUMMARY BEFORE CLEARING CART
+      setOrderSummary({
+        items: [...cartItems],
+        subtotal: subtotal,
+        discount: discount,
+        total: total,
+        couponDiscount: discount,
+        codCharges: codCharges
       })
-      console.log('User orders updated')
-    } catch (userError) {
-      console.warn('Could not update user orders:', userError.message)
+      
+      // Create order object
+      const orderData = {
+        id: Date.now().toString(),
+        orderNumber: newOrderNumber,
+        userId: user.id,
+        username: user.username,
+        userEmail: user.email,
+        date: new Date().toISOString(),
+        status: 'Processing',
+        items: orderItems,
+        subtotal: parseFloat(subtotal.toFixed(2)),
+        discount: parseFloat(discount.toFixed(2)),
+        couponDiscount: parseFloat(discount.toFixed(2)),
+        total: parseFloat(total.toFixed(2)),
+        paymentMethod: state.selectedPayment,
+        shippingAddress: {
+          ...state.formData,
+          name: state.formData.name || user.username || ''
+        },
+        couponApplied: appliedCoupon?.code || null,
+        codCharges: codCharges,
+        trackingNumber: `TRK${Math.floor(100000000 + Math.random() * 900000000)}`,
+        addressSource: state.useSavedAddress ? 'saved_address' : 'manual_entry'
+      }
+      
+      console.log('Order data to save:', orderData)
+      
+      // ADD ARTIFICIAL DELAY TO SHOW PROCESSING SCREEN (2 seconds)
+      await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      // Save order to orders collection
+      try {
+        const orderResponse = await api.post('/orders', orderData)
+        console.log('Order saved to /orders:', orderResponse.data)
+      } catch (orderError) {
+        console.warn('Could not save to /orders:', orderError.message)
+        // Don't fail the order if this fails
+      }
+      
+      // Update user's orders
+      const updatedUserOrders = [...(user.orders || []), orderData]
+      try {
+        await api.patch(`/users/${user.id}`, {
+          orders: updatedUserOrders
+        })
+        console.log('User orders updated')
+      } catch (userError) {
+        console.warn('Could not update user orders:', userError.message)
+        // Don't fail the order if this fails
+      }
+      
+      // Clear the cart
+      if (clearCart) {
+        clearCart()
+      }
+      
+      // Add small delay before showing success
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      // Update local state to show success page
+      updateState('orderNumber', newOrderNumber)
+      updateState('orderPlaced', true)
+      setIsProcessingOrder(false)
+      
+      showToast('Order placed successfully!', 'success')
+      
+    } catch (error) {
+      console.error('Order placement error:', error)
+      showToast('Failed to place order. Please try again.', 'error')
+      setIsProcessingOrder(false)
     }
-    
-    // Clear the cart
-    if (clearCart) {
-      clearCart()
-    }
-    
-    // Add small delay before showing success
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    // Update local state to show success page
-    updateState('orderNumber', newOrderNumber)
-    updateState('orderPlaced', true)
-    setIsProcessingOrder(false)
-    
-    showToast('Order placed successfully!', 'success')
-    
-  } catch (error) {
-    console.error('Order placement error:', error)
-    let errorMessage = 'Failed to place order. Please try again.'
-    if (error.message) {
-      errorMessage += ` (${error.message})`
-    }
-    showToast(errorMessage, 'error')
-    setIsProcessingOrder(false)
-  }
-}
-  // FIXED: Added parseFloat to prevent NaN
-  const calculateFinalTotalWithCharges = () => {
-    const finalTotal = parseFloat(getFinalTotal()) || 0
-    const codCharges = state.selectedPayment === 'cod' ? 10 : 0
-    const total = finalTotal + codCharges
-    return isNaN(total) ? 0 : total
   }
 
   const handleContinueShopping = () => {
     navigate('/products')
   }
 
-  // FIXED: Show loading while checking authentication
+  // Show loading while checking authentication
   if (checkingAuth) {
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
@@ -446,7 +496,7 @@ function CheckoutPage() {
     )
   }
 
-  // FIXED: Only redirect if explicitly false, not if undefined/null (loading)
+  // Only redirect if explicitly false, not if undefined/null (loading)
   if (isAuthenticated === false) {
     return null // Will redirect in useEffect
   }
@@ -491,7 +541,6 @@ function CheckoutPage() {
   }
 
   if (state.orderPlaced) {
-    // Use saved order summary instead of cartItems
     const itemsCount = orderSummary.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0)
     
     return (
@@ -507,23 +556,49 @@ function CheckoutPage() {
             <div className="bg-[#1a1a1a] border border-[#00ff00]/20 rounded-xl p-6 mb-8">
               <div className="text-white font-poppins font-semibold text-lg mb-4">Order Summary</div>
               
-              {orderSummary.items.map((item, index) => (
-                <div key={index} className="flex items-center justify-between bg-[#111111] p-3 rounded-lg mb-3">
-                  <div className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg"/>
-                    <div>
-                      <div className="text-white text-sm font-poppins font-medium">{item.name}</div>
-                      <div className="text-gray-400 text-xs text-left">Size: {item.size} • Qty: {item.quantity}</div>
+              {orderSummary.items.map((item, index) => {
+                const itemPrice = getItemPrice(item);
+                const quantity = parseInt(item.quantity) || 1;
+                const itemTotal = getItemTotal(item);
+                
+                return (
+                  <div key={index} className="flex items-center justify-between bg-[#111111] p-3 rounded-lg mb-3">
+                    <div className="flex items-center gap-3">
+                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg"/>
+                      <div className="text-left">
+                        <div className="text-white text-sm font-poppins font-medium">{item.name}</div>
+                        <div className="text-gray-400 text-xs">Size: {item.size} • Qty: {item.quantity}</div>
+                        {item.customizationData && (
+                          <div className="text-xs text-[#00ff00] mt-1">
+                            Customized: 
+                            {item.customizationData.playerName && ` ${item.customizationData.playerName.toUpperCase()}`}
+                            {item.customizationData.playerNumber && ` #${item.customizationData.playerNumber}`}
+                            {item.customizationData.patch && ` +${item.customizationData.patch.name}`}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[#00ff00] font-poppins font-bold">{formatPrice(itemPrice)}</div>
+                      {quantity > 1 && (
+                        <div className="text-gray-400 text-xs">
+                          {quantity} × {formatPrice(itemPrice)} = {formatPrice(itemTotal)}
+                        </div>
+                      )}
+                      {item.customizationData?.customizationTotal > 0 && (
+                        <div className="text-gray-400 text-xs">
+                          +{formatPrice(item.customizationData.customizationTotal)} customization
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-[#00ff00] font-poppins font-bold">{item.price}</div>
-                </div>
-              ))}
+                );
+              })}
               
               <div className="space-y-2 text-left border-t border-gray-700 pt-4 mt-4">
                 <div className="flex justify-between text-gray-400">
                   <span>Items ({itemsCount})</span>
-                  <span>₹{(orderSummary.subtotal || 0).toLocaleString('en-IN')}</span>
+                  <span>{formatPrice(orderSummary.subtotal || 0)}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Shipping</span>
@@ -532,18 +607,18 @@ function CheckoutPage() {
                 {appliedCoupon && orderSummary.discount > 0 && (
                   <div className="flex justify-between text-[#00ff00]">
                     <span>Coupon Discount ({appliedCoupon.discount}%)</span>
-                    <span>-₹{(orderSummary.discount || 0).toFixed(2)}</span>
+                    <span>-{formatPrice(orderSummary.discount || 0)}</span>
                   </div>
                 )}
                 {state.selectedPayment === 'cod' && (
                   <div className="flex justify-between text-yellow-400">
                     <span>COD Charges</span>
-                    <span>+₹{(orderSummary.codCharges || 0).toFixed(2)}</span>
+                    <span>+{formatPrice(orderSummary.codCharges || 0)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-white font-poppins font-bold text-lg pt-2">
                   <span>Total</span>
-                  <span>₹{(orderSummary.total || 0).toFixed(2)}</span>
+                  <span>{formatPrice(orderSummary.total || 0)}</span>
                 </div>
               </div>
             </div>
@@ -595,6 +670,11 @@ function CheckoutPage() {
     { name: 'city', label: 'City *', type: 'text' },
     { name: 'state', label: 'State *', type: 'text' }
   ]
+
+  // Calculate cart totals for display
+  const displaySubtotal = calculateSubtotal();
+  const displayDiscount = parseFloat(getCouponDiscount()) || 0;
+  const displayTotal = calculateFinalTotal();
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -886,22 +966,48 @@ function CheckoutPage() {
               )}
 
               <div className="space-y-4 mb-6 max-h-64 overflow-y-auto pr-2">
-                {cartItems.map(item => (
-                  <div key={`${item.id}-${item.size}`} className="flex items-center gap-3">
-                    <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"/>
-                    <div className="flex-1">
-                      <div className="text-white text-sm font-poppins font-semibold">{item.name}</div>
-                      <div className="text-gray-400 text-xs">Size: {item.size} • Qty: {item.quantity}</div>
+                {cartItems.map(item => {
+                  const itemPrice = getItemPrice(item);
+                  const quantity = parseInt(item.quantity) || 1;
+                  const itemTotal = getItemTotal(item);
+                  
+                  return (
+                    <div key={`${item.id}-${item.size}`} className="flex items-center gap-3">
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"/>
+                      <div className="flex-1">
+                        <div className="text-white text-sm font-poppins font-semibold">{item.name}</div>
+                        <div className="text-gray-400 text-xs">Size: {item.size} • Qty: {item.quantity}</div>
+                        {item.customizationData && (
+                          <div className="text-xs text-[#00ff00] mt-1">
+                            Customized: 
+                            {item.customizationData.playerName && ` ${item.customizationData.playerName.toUpperCase()}`}
+                            {item.customizationData.playerNumber && ` #${item.customizationData.playerNumber}`}
+                            {item.customizationData.patch && ` +${item.customizationData.patch.name}`}
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-right">
+                        <div className="text-[#00ff00] font-poppins font-bold">{formatPrice(itemPrice)}</div>
+                        {quantity > 1 && (
+                          <div className="text-gray-400 text-xs">
+                            {quantity} × {formatPrice(itemPrice)} = {formatPrice(itemTotal)}
+                          </div>
+                        )}
+                        {item.customizationData?.customizationTotal > 0 && (
+                          <div className="text-gray-400 text-xs">
+                            +{formatPrice(item.customizationData.customizationTotal)} customization
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-[#00ff00] font-poppins font-bold">{item.price}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between text-gray-400">
                   <span>Subtotal ({cartItems.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0)} items)</span>
-                  <span>₹{(parseFloat(getCartTotal()) || 0).toLocaleString('en-IN')}</span>
+                  <span>{formatPrice(displaySubtotal)}</span>
                 </div>
                 <div className="flex justify-between text-gray-400">
                   <span>Shipping</span>
@@ -910,7 +1016,7 @@ function CheckoutPage() {
                 {appliedCoupon && (
                   <div className="flex justify-between text-[#00ff00]">
                     <span>Coupon Discount ({appliedCoupon.discount}%)</span>
-                    <span>-₹{(parseFloat(getCouponDiscount()) || 0).toFixed(2)}</span>
+                    <span>-{formatPrice(displayDiscount)}</span>
                   </div>
                 )}
                 {state.selectedPayment === 'cod' && (
@@ -922,7 +1028,7 @@ function CheckoutPage() {
                 <div className="border-t border-gray-700 pt-4">
                   <div className="flex justify-between text-white font-poppins font-bold text-lg">
                     <span>Total</span>
-                    <span>₹{calculateFinalTotalWithCharges().toFixed(2)}</span>
+                    <span>{formatPrice(displayTotal)}</span>
                   </div>
                 </div>
               </div>
