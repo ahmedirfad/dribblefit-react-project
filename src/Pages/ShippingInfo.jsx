@@ -126,11 +126,12 @@ function ShippingInfo() {
     setActiveFAQ(activeFAQ === index ? null : index);
   };
 
+  // ✅ UPDATED CONTACT INFO WITH YOUR ACTUAL DETAILS
   const [contactInfo, setContactInfo] = useState({
-    email: 'support@jerseystore.com',
-    phone: '+91 98765 43210',
-    hours: 'Monday to Saturday: 9 AM - 7 PM',
-    address: '123 Jersey Street, Sports Complex, Mumbai, Maharashtra - 400001'
+    email: 'dribblefit10@gmail.com',
+    phone: '+91 7736919863',
+    hours: 'Monday to Saturday: 10 AM - 7 PM',
+    address: 'Kinfa Building Kakkanchery, Chelembra, Malappuram, Kerala - 673635'
   });
 
   const [userLocation, setUserLocation] = useState(null);
@@ -246,7 +247,7 @@ function ShippingInfo() {
                 </div>
               </div>
 
-              {/* Contact Info */}
+              {/* Contact Info - UPDATED */}
               <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-6">
                 <h3 className="text-white font-poppins font-semibold text-xl mb-6">Need Help?</h3>
                 <div className="space-y-4">
@@ -301,7 +302,7 @@ function ShippingInfo() {
               </div>
             </div>
 
-            {/* Main Content */}
+            {/* Main Content - Rest remains the same */}
             <div className="lg:col-span-2 space-y-8">
               {/* Shipping Methods */}
               <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-8">

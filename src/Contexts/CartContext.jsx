@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react'
 import api from '../Api/Axios.jsx'
+import { useAuth } from './AuthContext.jsx'
 
 const CartContext = createContext()
 
@@ -8,46 +9,51 @@ export const CartProvider = ({ children }) => {
   const [cartCount, setCartCount] = useState(0)
   const [appliedCoupon, setAppliedCoupon] = useState(null)
   const [isInitialized, setIsInitialized] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const { isAuthenticated, user } = useAuth()
 
-  useEffect(() => {
-    loadCartFromDB()
-    loadCouponFromStorage() // Load coupon from localStorage
-  }, [])
+  // Load cart from backend API
+  const loadCartFromAPI = async () => {
+    if (!isAuthenticated) {
+      setLoading(false)
+      setIsInitialized(true)
+      return
+    }
 
-  // Load cart from db.json
-  const loadCartFromDB = async () => {
     try {
-      const currentUserId = localStorage.getItem('currentUserId')
-      
-      if (currentUserId) {
-        const response = await api.get(`/users/${currentUserId}`)
-        const user = response.data
-        
-        if (user && user.cart) {
-          setCartItems(user.cart)
-          updateCartCount(user.cart)
-        } else {
-          setCartItems([])
-          updateCartCount([])
-        }
+      setLoading(true)
+      const response = await api.get('/cart')
+
+      if (response.data.success && response.data.cart) {
+        const items = response.data.cart.items || []
+        setCartItems(items)
+        updateCartCount(items)
       } else {
-        const savedCart = localStorage.getItem('dribblefit-cart')
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart)
-          setCartItems(parsedCart)
-          updateCartCount(parsedCart)
-        }
+        setCartItems([])
+        updateCartCount([])
       }
     } catch (error) {
-      console.error('Error loading cart:', error)
-      const savedCart = localStorage.getItem('dribblefit-cart')
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart)
-        setCartItems(parsedCart)
-        updateCartCount(parsedCart)
-      }
+      console.error('Error loading cart from API:', error)
+      loadCartFromLocalStorage()
     } finally {
+      setLoading(false)
       setIsInitialized(true)
+    }
+  }
+  // Fallback: Load cart from localStorage
+  const loadCartFromLocalStorage = () => {
+    const savedCart = localStorage.getItem('dribblefit-cart')
+    if (savedCart) {
+      const parsedCart = JSON.parse(savedCart)
+      setCartItems(parsedCart)
+      updateCartCount(parsedCart)
+    }
+  }
+
+  // Save guest cart to localStorage
+  const saveCartToLocalStorage = (items) => {
+    if (!isAuthenticated) {
+      localStorage.setItem('dribblefit-cart', JSON.stringify(items))
     }
   }
 
@@ -64,24 +70,6 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  // Save cart to db.json
-  const saveCartToDB = async (items) => {
-    try {
-      const currentUserId = localStorage.getItem('currentUserId')
-      
-      if (currentUserId) {
-        await api.patch(`/users/${currentUserId}`, {
-          cart: items
-        })
-      } else {
-        localStorage.setItem('dribblefit-cart', JSON.stringify(items))
-      }
-    } catch (error) {
-      console.error('Error saving cart:', error)
-      localStorage.setItem('dribblefit-cart', JSON.stringify(items))
-    }
-  }
-
   // Save coupon to localStorage
   const saveCouponToStorage = (coupon) => {
     if (coupon) {
@@ -91,104 +79,183 @@ export const CartProvider = ({ children }) => {
     }
   }
 
-  // Auto-save when cart changes
   useEffect(() => {
-    if (isInitialized && cartItems.length >= 0) {
-      saveCartToDB(cartItems)
+    if (isAuthenticated) {
+      loadCartFromAPI()
+    } else {
+      loadCartFromLocalStorage()
+      setIsInitialized(true)
+      setLoading(false)
     }
-  }, [cartItems, isInitialized])
-
-  // Auto-save when coupon changes
-  useEffect(() => {
-    if (isInitialized) {
-      saveCouponToStorage(appliedCoupon)
-    }
-  }, [appliedCoupon, isInitialized])
-
+    loadCouponFromStorage()
+  }, [isAuthenticated])
+  
   const updateCartCount = (items) => {
     const count = items.reduce((total, item) => total + item.quantity, 0)
     setCartCount(count)
   }
 
-  const addToCart = (product, size, quantity = 1, customizationData = null) => {
+  // Add item to cart (uses backend API)
+  const addToCart = async (product, size, quantity = 1, customizationData = null) => {
+    const newItem = {
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      size: size,
+      quantity: quantity,
+      team: product.team,
+      league: product.league,
+      customizationData: customizationData
+    }
+
+    if (isAuthenticated) {
+      // Logged in user - call backend API
+      try {
+        const response = await api.post('/cart/add', newItem)
+        if (response.data.success) {
+          // Reload cart to get updated data
+          await loadCartFromAPI()
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error)
+        // Fallback to local update
+        addToCartLocal(newItem)
+      }
+    } else {
+      // Guest user - update locally
+      addToCartLocal(newItem)
+    }
+  }
+
+  // Local cart update (for guest users or fallback)
+  const addToCartLocal = (newItem) => {
     setCartItems(prevItems => {
-      // Check if item with same ID, size AND customization exists
       const existingItem = prevItems.find(item =>
-        item.id === product.id &&
-        item.size === size &&
-        JSON.stringify(item.customizationData || {}) === JSON.stringify(customizationData || {})
+        item.product === newItem.productId &&
+        item.size === newItem.size &&
+        JSON.stringify(item.customizationData || {}) === JSON.stringify(newItem.customizationData || {})
       )
 
       let newItems
       if (existingItem) {
-        // If same item with same customization exists, update quantity
         newItems = prevItems.map(item =>
-          item.id === product.id &&
-          item.size === size &&
-          JSON.stringify(item.customizationData || {}) === JSON.stringify(customizationData || {})
-            ? { ...item, quantity: item.quantity + quantity }
+          item.product === newItem.productId &&
+            item.size === newItem.size &&
+            JSON.stringify(item.customizationData || {}) === JSON.stringify(newItem.customizationData || {})
+            ? { ...item, quantity: item.quantity + newItem.quantity }
             : item
         )
       } else {
-        // Create new item with customization data
-        const newItem = {
-          id: product.id,
-          name: product.name,
-          price: product.price, // Keep the original price string
-          image: product.image,
-          size: size,
-          quantity: quantity,
-          inStock: product.inStock,
-          team: product.team,
-          league: product.league,
-          customizationData: customizationData
-        }
-        newItems = [...prevItems, newItem]
+        newItems = [...prevItems, {
+          product: newItem.productId,
+          name: newItem.name,
+          price: newItem.price,
+          image: newItem.image,
+          size: newItem.size,
+          quantity: newItem.quantity,
+          team: newItem.team,
+          league: newItem.league,
+          customizationData: newItem.customizationData
+        }]
       }
-      
-      // UPDATE CART COUNT IMMEDIATELY
+
       updateCartCount(newItems)
-      
       return newItems
     })
   }
 
-  const removeFromCart = (productId, size) => {
+  // Remove item from cart
+  const removeFromCart = async (productId, size) => {
+    if (isAuthenticated) {
+      try {
+        await api.delete(`/cart/remove/${productId}/${size}`)
+        await loadCartFromAPI()
+      } catch (error) {
+        console.error('Error removing from cart:', error)
+        removeFromCartLocal(productId, size)
+      }
+    } else {
+      removeFromCartLocal(productId, size)
+    }
+  }
+
+  const removeFromCartLocal = (productId, size) => {
     setCartItems(prevItems => {
-      const newItems = prevItems.filter(item => !(item.id === productId && item.size === size))
-      
-      // UPDATE CART COUNT IMMEDIATELY
+      const newItems = prevItems.filter(item => !(item.product === productId && item.size === size))
       updateCartCount(newItems)
-      
       return newItems
     })
   }
 
-  const updateQuantity = (productId, size, newQuantity) => {
+  // Update quantity
+  const updateQuantity = async (productId, size, newQuantity) => {
     if (newQuantity < 1) {
       removeFromCart(productId, size)
       return
     }
 
+    if (isAuthenticated) {
+      try {
+        if (newQuantity > (cartItems.find(i => i.product === productId && i.size === size)?.quantity || 0)) {
+          await api.put(`/cart/increase/${productId}/${size}`)
+        } else if (newQuantity < (cartItems.find(i => i.product === productId && i.size === size)?.quantity || 0)) {
+          await api.put(`/cart/decrease/${productId}/${size}`)
+        }
+        await loadCartFromAPI()
+      } catch (error) {
+        console.error('Error updating quantity:', error)
+        updateQuantityLocal(productId, size, newQuantity)
+      }
+    } else {
+      updateQuantityLocal(productId, size, newQuantity)
+    }
+  }
+
+  const updateQuantityLocal = (productId, size, newQuantity) => {
     setCartItems(prevItems => {
       const newItems = prevItems.map(item =>
-        item.id === productId && item.size === size
+        item.product === productId && item.size === size
           ? { ...item, quantity: newQuantity }
           : item
       )
-      
-      // UPDATE CART COUNT IMMEDIATELY
       updateCartCount(newItems)
-      
       return newItems
     })
   }
 
-  const clearCart = () => {
-    setCartItems([])
-    updateCartCount([])
+  // Clear entire cart
+  const clearCart = async () => {
+    if (isAuthenticated) {
+      try {
+        await api.delete('/cart/clear')
+        setCartItems([])
+        updateCartCount([])
+      } catch (error) {
+        console.error('Error clearing cart:', error)
+        setCartItems([])
+        updateCartCount([])
+      }
+    } else {
+      setCartItems([])
+      updateCartCount([])
+    }
   }
 
+  // Sync guest cart after login
+  const syncCartOnLogin = async () => {
+    const guestCart = cartItems
+    if (guestCart.length === 0) return
+
+    try {
+      await api.post('/cart/sync', { guestCart })
+      await loadCartFromAPI()
+    } catch (error) {
+      console.error('Error syncing cart:', error)
+    }
+  }
+
+  // Coupon functions (same as before)
   const applyCoupon = (coupon) => {
     setAppliedCoupon(coupon)
   }
@@ -197,15 +264,11 @@ export const CartProvider = ({ children }) => {
     setAppliedCoupon(null)
   }
 
-  // Helper function to extract price from string and add customization
+  // Helper functions
   const getItemPrice = (item) => {
-    // Extract numeric value from price string (handles formats like "₹3,999" or "₹2999")
     const priceString = item.price ? item.price.replace('₹', '').replace(/,/g, '') : '0'
     const basePrice = parseFloat(priceString) || 0
-    
-    // Add customization cost if exists
     const customizationTotal = item.customizationData?.customizationTotal || 0
-    
     return basePrice + customizationTotal
   }
 
@@ -229,53 +292,8 @@ export const CartProvider = ({ children }) => {
   }
 
   const getCartItemCount = (productId, size) => {
-    const item = cartItems.find(item => item.id === productId && item.size === size)
+    const item = cartItems.find(item => item.product === productId && item.size === size)
     return item ? item.quantity : 0
-  }
-
-  const syncCartOnLogin = async (userId) => {
-    try {
-      const response = await api.get(`/users/${userId}`)
-      const user = response.data
-      
-      const guestCartJson = localStorage.getItem('dribblefit-cart')
-      const guestCart = guestCartJson ? JSON.parse(guestCartJson) : []
-      
-      const mergedCart = mergeCarts(user.cart || [], guestCart)
-      
-      setCartItems(mergedCart)
-      updateCartCount(mergedCart)
-      
-      await api.patch(`/users/${userId}`, {
-        cart: mergedCart
-      })
-      
-      localStorage.removeItem('dribblefit-cart')
-      
-    } catch (error) {
-      console.error('Error syncing cart on login:', error)
-    }
-  }
-
-  const mergeCarts = (dbCart, localCart) => {
-    const merged = [...dbCart]
-    
-    localCart.forEach(localItem => {
-      // Check for exact match including customization
-      const existingItem = merged.find(item => 
-        item.id === localItem.id && 
-        item.size === localItem.size &&
-        JSON.stringify(item.customizationData || {}) === JSON.stringify(localItem.customizationData || {})
-      )
-      
-      if (existingItem) {
-        existingItem.quantity += localItem.quantity
-      } else {
-        merged.push(localItem)
-      }
-    })
-    
-    return merged
   }
 
   return (
@@ -283,6 +301,7 @@ export const CartProvider = ({ children }) => {
       cartItems,
       cartCount,
       appliedCoupon,
+      loading,
       addToCart,
       removeFromCart,
       updateQuantity,
@@ -294,7 +313,7 @@ export const CartProvider = ({ children }) => {
       getFinalTotal,
       getCartItemCount,
       syncCartOnLogin,
-      getItemPrice // Export this helper function
+      getItemPrice
     }}>
       {children}
     </CartContext.Provider>

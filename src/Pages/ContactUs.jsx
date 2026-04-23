@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import api from '../Api/Axios'
 import Navbar from '../Components/Layout/Navbar'
 import Footer from '../Components/Layout/Footer'
 import SaleBanner from '../Components/Home/SaleBanner'
@@ -9,6 +10,7 @@ function ContactUs() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [error, setError] = useState('')
 
   const contactInfo = [
     {
@@ -18,7 +20,7 @@ function ContactUs() {
         </svg>
       ),
       title: "EMAIL US",
-      info: "support@dribblefit.com",
+      info: "dribblefit10@gmail.com",
       description: "We'll respond within 24 hours"
     },
     {
@@ -28,7 +30,7 @@ function ContactUs() {
         </svg>
       ),
       title: "CALL US",
-      info: "+91 98765 43210",
+      info: "+91 7736919863",
       description: "Mon-Sat, 10AM to 7PM"
     },
     {
@@ -39,8 +41,8 @@ function ContactUs() {
         </svg>
       ),
       title: "VISIT US",
-      info: "123 Football Street, Sports District",
-      description: "Mumbai, Maharashtra 400001"
+      info: "Kinfa Building Kakkanchery, Chelembra",
+      description: "Malappuram, Kerala 673635"
     }
   ]
 
@@ -56,18 +58,35 @@ function ContactUs() {
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
+    setError('')
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
-    setTimeout(() => {
-      console.log('Contact form submitted:', formData)
+    setError('')
+
+    try {
+      const response = await api.post('/contact/send', {
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message
+      })
+
+      if (response.data.success) {
+        setSubmitted(true)
+        setFormData({ name: '', email: '', subject: '', message: '' })
+        setTimeout(() => setSubmitted(false), 5000)
+      } else {
+        setError('Failed to send message. Please try again.')
+      }
+    } catch (error) {
+      console.error('Contact form error:', error)
+      setError(error.response?.data?.message || 'Failed to send message. Please try again.')
+    } finally {
       setIsSubmitting(false)
-      setSubmitted(true)
-      setFormData({ name: '', email: '', subject: '', message: '' })
-      setTimeout(() => setSubmitted(false), 5000)
-    }, 1500)
+    }
   }
 
   return (
@@ -98,17 +117,52 @@ function ContactUs() {
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
-                Message sent successfully!
+                Message sent successfully! We'll get back to you soon.
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-400 font-semibold flex items-center gap-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                {error}
               </div>
             )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <input type="text" name="name" value={formData.name} onChange={handleChange} required className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg" placeholder="Your Name"/>
-                <input type="email" name="email" value={formData.email} onChange={handleChange} required className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg" placeholder="Email"/>
+                <div>
+                  <input 
+                    type="text" 
+                    name="name" 
+                    value={formData.name} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00]"
+                    placeholder="Your Name"
+                  />
+                </div>
+                <div>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    value={formData.email} 
+                    onChange={handleChange} 
+                    required 
+                    className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00]"
+                    placeholder="Your Email"
+                  />
+                </div>
               </div>
 
-              <select name="subject" value={formData.subject} onChange={handleChange} required className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg">
+              <select 
+                name="subject" 
+                value={formData.subject} 
+                onChange={handleChange} 
+                required 
+                className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00]"
+              >
                 <option value="">Select a subject</option>
                 <option value="Order Issue">Order Issue</option>
                 <option value="Product Inquiry">Product Inquiry</option>
@@ -118,9 +172,21 @@ function ContactUs() {
                 <option value="Other">Other</option>
               </select>
 
-              <textarea name="message" value={formData.message} onChange={handleChange} required rows="6" className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg resize-none" placeholder="Your Message"/>
+              <textarea 
+                name="message" 
+                value={formData.message} 
+                onChange={handleChange} 
+                required 
+                rows="6" 
+                className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00] resize-none"
+                placeholder="Your Message"
+              />
               
-              <button type="submit" disabled={isSubmitting} className="w-full bg-[#00ff00] text-black font-bold py-4 rounded-lg disabled:opacity-50">
+              <button 
+                type="submit" 
+                disabled={isSubmitting} 
+                className="w-full bg-[#00ff00] text-black font-bold py-4 rounded-lg disabled:opacity-50 hover:bg-[#00ff00]/90 transition-all duration-300"
+              >
                 {isSubmitting ? 'SENDING...' : 'SEND MESSAGE'}
               </button>
             </form>
@@ -131,7 +197,7 @@ function ContactUs() {
               <h3 className="text-2xl font-bold text-white mb-6">GET IN TOUCH</h3>
               <div className="space-y-4">
                 {contactInfo.map((item, i) => (
-                  <div key={i} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-6 flex gap-4">
+                  <div key={i} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-6 flex gap-4 hover:border-[#00ff00]/40 transition-all duration-300">
                     <div className="bg-[#00ff00]/10 p-3 rounded-lg">{item.icon}</div>
                     <div>
                       <h4 className="text-[#00ff00] font-bold">{item.title}</h4>
@@ -147,13 +213,13 @@ function ContactUs() {
               <h3 className="text-2xl font-bold text-white mb-6">FAQ</h3>
               <div className="space-y-4">
                 {faqs.map((faq, i) => (
-                  <div key={i} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-5 cursor-pointer group"
+                  <div key={i} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-5 cursor-pointer group hover:border-[#00ff00]/40 transition-all duration-300"
                     onClick={() => {
                       const el = document.getElementById(`faq-${i}`)
                       if (el) el.classList.toggle('hidden')
                     }}>
-                    <h4 className="text-white font-semibold group-hover:text-[#00ff00]">{faq.question}</h4>
-                    <p id={`faq-${i}`} className="text-gray-400 hidden">{faq.answer}</p>
+                    <h4 className="text-white font-semibold group-hover:text-[#00ff00] transition-colors">{faq.question}</h4>
+                    <p id={`faq-${i}`} className="text-gray-400 mt-2 hidden">{faq.answer}</p>
                   </div>
                 ))}
               </div>
@@ -183,13 +249,13 @@ function ContactUs() {
           <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl overflow-hidden">
             <div className="p-8 border-b border-gray-800">
               <h3 className="text-2xl font-bold text-white mb-2">OUR LOCATION</h3>
-              <p className="text-gray-400">Visit our flagship store in Mumbai</p>
+              <p className="text-gray-400">Visit our flagship store in Kerala</p>
             </div>
             <div className="h-96 bg-[#1a1a1a] flex flex-col items-center justify-center">
               <div className="text-[#00ff00] text-6xl mb-4">📍</div>
-              <p className="text-white font-semibold text-lg">123 Football Street</p>
-              <p className="text-gray-400">Mumbai, MH 400001</p>
-              <button onClick={() => window.open('https://maps.google.com', '_blank')} className="mt-4 bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg">
+              <p className="text-white font-semibold text-lg">Kinfra Building</p>
+              <p className="text-gray-400">Malappuram, KL 673635</p>
+              <button onClick={() => window.open('https://maps.app.goo.gl/eJEr5pVvFEdQZ35Y6?g_st=iw', '_blank')} className="mt-4 bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg hover:bg-[#00ff00]/90 transition-all duration-300">
                 GET DIRECTIONS
               </button>
             </div>

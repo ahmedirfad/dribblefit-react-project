@@ -20,63 +20,27 @@ const Dashboard = () => {
     fetchDashboardData()
   }, [])
 
+  // ✅ UPDATED: Using backend API instead of frontend calculations
   const fetchDashboardData = async () => {
     try {
-      // fetch users
-      const usersRes = await api.get('/users')
-      const users = usersRes.data || []
+      setLoading(true)
+      const response = await api.get('/admin/dashboard/stats')
       
-      // fetch products
-      const productsRes = await api.get('/products')
-      const products = productsRes.data || []
-      
-      // calculate orders from all users
-      const allOrders = users.reduce((acc, user) => {
-        return [...acc, ...(user.orders || [])]
-      }, [])
-      
-      // calculate revenue
-      const revenue = allOrders.reduce((sum, order) => sum + (parseFloat(order.total) || 0), 0)
-      
-      // calculate pending orders
-      const pendingOrders = allOrders.filter(order => order.status === 'Processing').length
-      
-      // calculate out of stock products
-      const outOfStock = products.filter(product => !product.inStock).length
-      
-      // get recent orders
-      const sortedOrders = [...allOrders]
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
-        .slice(0, 5)
-      
-      // get top products
-      const productSales = {}
-      allOrders.forEach(order => {
-        order.items?.forEach(item => {
-          productSales[item.id] = (productSales[item.id] || 0) + (item.quantity || 1)
+      if (response.data.success) {
+        const { stats, recentOrders, topProducts } = response.data
+        
+        setStats({
+          totalUsers: stats.totalUsers,
+          totalProducts: stats.totalProducts,
+          totalOrders: stats.totalOrders,
+          revenue: stats.totalRevenue,
+          pendingOrders: stats.pendingOrders,
+          outOfStock: stats.outOfStock
         })
-      })
-      
-      const topProductsList = Object.entries(productSales)
-        .sort(([, a], [, b]) => b - a)
-        .slice(0, 5)
-        .map(([id, sales]) => {
-          const product = products.find(p => p.id === id)
-          return product ? { ...product, sales } : null
-        })
-        .filter(Boolean)
-
-      setStats({
-        totalUsers: users.length,
-        totalProducts: products.length,
-        totalOrders: allOrders.length,
-        revenue: revenue,
-        pendingOrders: pendingOrders,
-        outOfStock: outOfStock
-      })
-      
-      setRecentOrders(sortedOrders)
-      setTopProducts(topProductsList)
+        
+        setRecentOrders(recentOrders)
+        setTopProducts(topProducts)
+      }
     } catch (error) {
       console.error('Error fetching dashboard data:', error)
     } finally {
@@ -227,13 +191,13 @@ const Dashboard = () => {
           <div className="space-y-4">
             {recentOrders.length > 0 ? (
               recentOrders.map((order) => (
-                <div key={order.id} className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg">
+                <div key={order._id || order.id} className="flex items-center justify-between p-4 bg-[#1a1a1a] rounded-lg">
                   <div>
                     <p className="text-white font-medium">#{order.orderNumber}</p>
                     <p className="text-gray-400 text-sm">{order.username}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-[#00ff00] font-bold">₹{parseFloat(order.total).toFixed(2)}</p>
+                    <p className="text-[#00ff00] font-bold">₹{typeof order.total === 'number' ? order.total.toFixed(2) : parseFloat(order.total).toFixed(2)}</p>
                     <span className={`px-2 py-1 rounded-full text-xs ${getStatusColor(order.status)}`}>
                       {order.status}
                     </span>
@@ -258,7 +222,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             {topProducts.length > 0 ? (
               topProducts.map((product, index) => (
-                <div key={product.id} className="flex items-center space-x-4 p-4 bg-[#1a1a1a] rounded-lg">
+                <div key={product._id || product.id} className="flex items-center space-x-4 p-4 bg-[#1a1a1a] rounded-lg">
                   <div className="w-12 h-12 bg-gradient-to-br from-[#00ff00]/20 to-emerald-600/20 rounded-lg flex items-center justify-center flex-shrink-0">
                     <svg className="w-6 h-6 text-[#00ff00]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
@@ -270,7 +234,7 @@ const Dashboard = () => {
                   </div>
                   <div className="text-right">
                     <p className="text-[#00ff00] font-bold">{product.price}</p>
-                    <p className="text-gray-400 text-xs">{product.sales} sold</p>
+                    <p className="text-gray-400 text-xs">{product.totalSold || product.sales} sold</p>
                   </div>
                 </div>
               ))

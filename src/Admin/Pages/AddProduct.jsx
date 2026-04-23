@@ -5,6 +5,7 @@ import { useNavigate, Link } from 'react-router-dom'
 const AddProduct = () => {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [imagePreview, setImagePreview] = useState('')
 
   const [formData, setFormData] = useState({
@@ -44,6 +45,48 @@ const AddProduct = () => {
     }
   }, [formData.image])
 
+  // ✅ NEW: Handle file upload to Cloudinary
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      showNotification('Image size should be less than 5MB', 'error');
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      showNotification('Please upload an image file', 'error');
+      return;
+    }
+
+    const formDataFile = new FormData();
+    formDataFile.append('image', file);
+
+    setUploadingImage(true);
+    setImagePreview(URL.createObjectURL(file)); // Show preview immediately
+
+    try {
+      const response = await api.post('/admin/upload', formDataFile, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        const cloudinaryUrl = response.data.imageUrl;
+        setFormData(prev => ({ ...prev, image: cloudinaryUrl }));
+        showNotification('Image uploaded successfully!', 'success');
+      }
+    } catch (error) {
+      console.error('Upload error:', error);
+      showNotification('Failed to upload image', 'error');
+      setImagePreview('');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleImageChange = (e) => {
     const value = e.target.value
     const normalizedValue = value.replace(/\\/g, '/')
@@ -68,7 +111,7 @@ const AddProduct = () => {
     }
 
     if (!formData.image.trim()) {
-      alert('Image URL is required')
+      alert('Image is required')
       setLoading(false)
       return
     }
@@ -79,14 +122,13 @@ const AddProduct = () => {
         price: `₹${parseInt(formData.price || 0).toLocaleString('en-IN')}`,
         originalPrice: formData.originalPrice ? `₹${parseInt(formData.originalPrice).toLocaleString('en-IN')}` : undefined,
         discount: formData.discount ? `${formData.discount}% OFF` : undefined,
-        id: Date.now().toString() // Generate unique ID
+        id: Date.now().toString()
       }
 
-      const response = await api.post('/products', productData)
+      await api.post('/admin/products', productData)
       
       showNotification('Product added successfully!', 'success')
       
-      // Redirect to product list or view the new product
       setTimeout(() => {
         navigate(`/admin/products/${productData.id}`)
       }, 1500)
@@ -143,22 +185,72 @@ const AddProduct = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Image Preview */}
-        {imagePreview && (
-          <div className="mb-6">
-            <p className="text-gray-400 text-sm mb-2">Image Preview:</p>
-            <div className="w-48 h-48 bg-[#1a1a1a] rounded-lg overflow-hidden border border-gray-700">
-              <img
-                src={imagePreview}
-                alt="Preview"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL'
-                }}
-              />
+        {/* ✅ NEW: Image Upload Section */}
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Product Image *</label>
+          
+          {/* Image Preview */}
+          {imagePreview && (
+            <div className="mb-4">
+              <div className="w-48 h-48 bg-[#1a1a1a] rounded-lg overflow-hidden border border-gray-700">
+                <img
+                  src={imagePreview}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/150?text=Invalid+URL'
+                  }}
+                />
+              </div>
             </div>
+          )}
+
+          {/* Upload Button */}
+          <div className="flex gap-4 items-center">
+            <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              {uploadingImage ? 'Uploading...' : '📤 Upload Image'}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+                disabled={uploadingImage}
+              />
+            </label>
+            
+            {uploadingImage && (
+              <div className="text-green-400 text-sm">Uploading to Cloudinary...</div>
+            )}
           </div>
-        )}
+          <p className="text-gray-500 text-xs mt-2">
+            Upload a product image (JPEG, PNG, WEBP). Max 5MB. Images will be optimized automatically.
+          </p>
+        </div>
+
+        {/* OR separator */}
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-700"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-[#111111] text-gray-500">OR enter image URL directly</span>
+          </div>
+        </div>
+
+        {/* Image URL Input (fallback) */}
+        <div>
+          <label className="block text-gray-400 text-sm mb-2">Image URL</label>
+          <input
+            type="text"
+            value={formData.image}
+            onChange={handleImageChange}
+            placeholder="https://res.cloudinary.com/... or /images/product.jpg"
+            className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
+          />
+          <p className="text-gray-500 text-xs mt-1">
+            After uploading, Cloudinary URL will appear here automatically
+          </p>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
@@ -251,21 +343,6 @@ const AddProduct = () => {
               placeholder="e.g., Premier League"
             />
           </div>
-
-          <div>
-            <label className="block text-gray-400 text-sm mb-2">Image URL *</label>
-            <input
-              type="text"
-              value={formData.image}
-              onChange={handleImageChange}
-              required
-              placeholder="Enter image URL or local path"
-              className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00]"
-            />
-            <p className="text-gray-500 text-xs mt-1">
-              Example: https://example.com/image.jpg or /images/products/manutd.jpg
-            </p>
-          </div>
         </div>
 
         <div>
@@ -338,7 +415,7 @@ const AddProduct = () => {
             </button>
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || uploadingImage}
               className="bg-[#00ff00] text-black font-bold px-4 py-2 rounded-lg hover:bg-[#00ff00]/90 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (

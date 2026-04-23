@@ -31,6 +31,15 @@ import ReturnsExchanges from './Pages/ReturnsExchanges.jsx'
 import SizeGuide from './Pages/SizeGuide.jsx'
 import FAQ from './Pages/FAQ.jsx'
 import JerseyCare from './Pages/JerseyCare.jsx'
+import SaleBannerSettings from './Admin/Pages/Home/SaleBannerSettings.jsx'
+import HomepageDashboard from './Admin/Pages/Home/HomepageDashboard.jsx'
+import HeroBannerSettings from './Admin/Pages/Home/HeroBannerSettings.jsx'
+import InternationalKitsSettings from './Admin/Pages/Home/InternationalKitsSettings.jsx'
+import BestSellersSettings from './Admin/Pages/Home/BestSellersSettings.jsx'
+import PassionSectionSettings from './Admin/Pages/Home/PassionSectionSettings.jsx'
+import PromoCategoriesSettings from './Admin/Pages/Home/PromoCategoriesSettings.jsx'
+import MexicoDeOroSettings from './Admin/Pages/Home/MexicoDeoroSettings.jsx'
+import VerifyOtp from './Components/Auth/VerifyOtp.jsx'
 
 function App() {
   return (
@@ -45,6 +54,7 @@ function App() {
                 <Route path="/home" element={<Home />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/verify-otp" element={<VerifyOtp />} />
                 <Route path="/products" element={<Products />} />
                 <Route path="/product/:id" element={<ProductsDetail />} />
                 <Route path="/cart" element={<Cart />} />
@@ -69,6 +79,17 @@ function App() {
                 }>
                   <Route index element={<Dashboard />} />
                   <Route path="users" element={<UserManagement />} />
+
+                  <Route path="home" element={<HomepageDashboard />} />
+                  <Route path="home/sale-banner" element={<SaleBannerSettings />} />
+                  <Route path="home/hero-banner" element={<HeroBannerSettings />} />
+                  <Route path="home/kits" element={<InternationalKitsSettings />} />
+                  <Route path="home/bestsellers" element={<BestSellersSettings />} />
+                  <Route path="home/passion" element={<PassionSectionSettings />} />
+                  <Route path="home/promo" element={<PromoCategoriesSettings />} />
+                  <Route path="home/video" element={<MexicoDeOroSettings />} />
+
+
                   
                   {/* Product Management Routes */}
                   <Route path="products" element={<ProductManagement />} />

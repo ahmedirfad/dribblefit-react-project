@@ -73,12 +73,12 @@ function Cart() {
       })
       setCouponError('')
       setCouponCode('')
-    } else if (upperCaseCode === 'NEWYEAR2026') {
+    } else if (upperCaseCode === 'WORLDCUP2026') {
       applyCoupon({ 
-        discount: 35, 
+        discount: 25, 
         type: 'percentage', 
-        message: '35% off your entire order! Happy New Year 2026!',
-        code: 'NEWYEAR2026'
+        message: '25% off your entire order! RAMADAN KAREEM MUBARAK 2026!',
+        code: 'RAMADAN2026'
       })
       setCouponError('')
       setCouponCode('')
@@ -165,7 +165,7 @@ function Cart() {
           <div className="lg:col-span-2 space-y-4">
             {cartItems.map((item) => (
               <div 
-                key={`${item.id}-${item.size}`}
+                key={`${item.product}-${item.size}`}
                 className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-6 hover:border-[#00ff00]/40 transition-all duration-300"
               >
                 <div className="flex flex-col md:flex-row gap-6">
@@ -196,7 +196,7 @@ function Cart() {
                         )}
                       </div>
                       <button
-                        onClick={() => handleRemoveItem(item.id, item.size)}
+                        onClick={() => handleRemoveItem(item.product, item.size)}
                         className="text-gray-400 hover:text-red-400 transition-colors"
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -237,7 +237,7 @@ function Cart() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity - 1)}
+                          onClick={() => handleQuantityChange(item.product, item.size, item.quantity - 1)}
                           className="w-8 h-8 bg-[#1a1a1a] border border-[#00ff00]/30 text-white rounded-lg hover:bg-[#00ff00] hover:text-black transition-all duration-300 flex items-center justify-center"
                         >
                           -
@@ -246,7 +246,7 @@ function Cart() {
                           {item.quantity}
                         </span>
                         <button
-                          onClick={() => handleQuantityChange(item.id, item.size, item.quantity + 1)}
+                          onClick={() => handleQuantityChange(item.product, item.size, item.quantity + 1)}
                           className="w-8 h-8 bg-[#1a1a1a] border border-[#00ff00]/30 text-white rounded-lg hover:bg-[#00ff00] hover:text-black transition-all duration-300 flex items-center justify-center"
                         >
                           +

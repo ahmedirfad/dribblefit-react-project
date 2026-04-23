@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import api from '../../Api/Axios.jsx'
 import { useCart } from '../../Contexts/CartContext'
@@ -8,14 +8,14 @@ import Navbar from '../Layout/Navbar.jsx'
 function Products() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
-  const [filteredProducts, setFilteredProducts] = useState([])
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const { addToCart } = useCart()
-
-  // Pagination state
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('') // ✅ New state for debounced search
   const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage] = useState(8)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
+  const { addToCart } = useCart()
+  const itemsPerPage = 8
 
   const [searchParams] = useSearchParams()
   const urlCategory = searchParams.get('category')
@@ -29,6 +29,15 @@ function Products() {
     'anthem-jackets'
   ]
 
+  // ✅ Debounce search term - waits 500ms after user stops typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm)
+    }, 500) // 500ms delay
+
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
   const getCategoryDisplayName = (category) => {
     const names = {
       'all': 'All Products',
@@ -40,90 +49,56 @@ function Products() {
     return names[category] || category
   }
 
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  useEffect(() => {
-    if (urlCategory && categories.includes(urlCategory)) {
-      setSelectedCategory(urlCategory)
-    }
-    if (urlSearch) {
-      setSearchTerm(urlSearch)
-    }
-  }, [urlCategory, urlSearch])
-
-  useEffect(() => {
-    filterProducts()
-    setCurrentPage(1) // Reset to first page when filters change
-  }, [products, selectedCategory, searchTerm])
-
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products')
-      setProducts(response.data)
-      setLoading(false)
+      setLoading(true)
+      let url = `/products?page=${currentPage}&limit=${itemsPerPage}`
+      
+      if (selectedCategory !== 'all') {
+        url += `&category=${selectedCategory}`
+      }
+      
+      if (debouncedSearchTerm.trim()) {  // ✅ Use debounced value
+        url += `&search=${encodeURIComponent(debouncedSearchTerm)}`
+      }
+      
+      const response = await api.get(url)
+      const productsData = response.data.products || []
+      
+      setProducts(productsData)
+      setTotalPages(response.data.pagination?.totalPages || 1)
+      setTotalProducts(response.data.pagination?.totalProducts || 0)
     } catch (error) {
       console.error('Error fetching products:', error)
+      setProducts([])
+    } finally {
       setLoading(false)
     }
   }
 
-  const filterProducts = () => {
-    let filtered = products
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product =>
-        product.category === selectedCategory
-      )
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.team?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.league?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category?.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    setFilteredProducts(filtered)
+  const handleSearch = (e) => {
+    const value = e.target.value
+    setSearchTerm(value)  // This updates immediately for UI
+    setCurrentPage(1)     // Reset to first page on new search
   }
 
-  const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value)
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value)
+    setCurrentPage(1)
+    setSearchTerm('')
+    setDebouncedSearchTerm('')
   }
 
-  const handleSearchSubmit = (e) => {
-    e.preventDefault()
+  const clearSearch = () => {
+    setSearchTerm('')
+    setDebouncedSearchTerm('')
+    setCurrentPage(1)
   }
 
-  const handleAddToCart = (product) => {
-    const defaultSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'M'
-    addToCart(product, defaultSize, 1)
-
-    const notification = document.createElement('div')
-    notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-    notification.textContent = `Added ${product.name} to cart!`
-    document.body.appendChild(notification)
-
-    setTimeout(() => {
-      document.body.removeChild(notification)
-    }, 3000)
-  }
-
-  // Pagination logic
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
-
-  // Change page
   const paginate = (pageNumber) => setCurrentPage(pageNumber)
   const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
   const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
 
-  // Get page numbers for display
   const getPageNumbers = () => {
     const pageNumbers = []
     const maxVisiblePages = 5
@@ -147,34 +122,46 @@ function Products() {
         pageNumbers.push(totalPages)
       }
     }
-    
     return pageNumbers
   }
 
-  // In Products.jsx, update the getImageUrl function:
+  // ✅ Fetch when debouncedSearchTerm changes (not on every keystroke)
+  useEffect(() => {
+    if (urlCategory && categories.includes(urlCategory)) {
+      setSelectedCategory(urlCategory)
+    }
+    if (urlSearch) {
+      setSearchTerm(urlSearch)
+      setDebouncedSearchTerm(urlSearch)
+    }
+  }, [urlCategory, urlSearch])
+
+  useEffect(() => {
+    fetchProducts()
+  }, [currentPage, selectedCategory, debouncedSearchTerm])  // ✅ Use debouncedSearchTerm
+
   const getImageUrl = (imagePath) => {
     if (!imagePath) return ''
-
-    // Normalize path: convert backslashes to forward slashes
     const normalizedPath = imagePath.replace(/\\/g, '/')
-
-    // If it's a local path starting with / or images/
     if (normalizedPath.startsWith('/') || normalizedPath.startsWith('images/')) {
-      // Ensure it starts with /
-      const cleanPath = normalizedPath.startsWith('/')
-        ? normalizedPath
-        : `/${normalizedPath}`
-
+      const cleanPath = normalizedPath.startsWith('/') ? normalizedPath : `/${normalizedPath}`
       return `http://localhost:5173${cleanPath}`
     }
-
-    // If it's already a full URL
     if (normalizedPath.startsWith('http://') || normalizedPath.startsWith('https://')) {
       return normalizedPath
     }
-
-    // Default: assume it's a local path
     return `http://localhost:5173/images/${normalizedPath}`
+  }
+
+  const handleAddToCart = (product) => {
+    const defaultSize = product.sizes && product.sizes.length > 0 ? product.sizes[0] : 'M'
+    addToCart(product, defaultSize, 1)
+
+    const notification = document.createElement('div')
+    notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
+    notification.textContent = `Added ${product.name} to cart!`
+    document.body.appendChild(notification)
+    setTimeout(() => notification.remove(), 3000)
   }
 
   if (loading) {
@@ -201,21 +188,13 @@ function Products() {
           <p className="text-gray-400 text-lg">
             Explore our complete range of football jerseys and accessories
           </p>
-
-          {searchTerm && (
-            <div className="mt-4">
-              <p className="text-[#00ff00]">
-                Showing results for: <span className="font-bold">"{searchTerm}"</span>
-              </p>
-            </div>
-          )}
         </div>
 
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex-1">
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
+              onChange={handleCategoryChange}
               className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00]"
             >
               {categories.map(category => (
@@ -226,24 +205,21 @@ function Products() {
             </select>
           </div>
 
-          <form onSubmit={handleSearchSubmit} className="flex-1 relative">
+          <div className="flex-1 relative">
             <input
               type="text"
               placeholder="Search jerseys, teams, leagues..."
               value={searchTerm}
-              onChange={handleSearchChange}
+              onChange={handleSearch}
               className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 pl-10 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] placeholder-gray-500"
             />
-            <button type="submit" className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <svg className="w-4 h-4 text-gray-500 hover:text-[#00ff00] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
-
+            <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
             {searchTerm && (
               <button
                 type="button"
-                onClick={() => setSearchTerm('')}
+                onClick={clearSearch}
                 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-red-400 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -251,30 +227,31 @@ function Products() {
                 </svg>
               </button>
             )}
-          </form>
+          </div>
         </div>
 
-        {/* products-count */}
         <div className="text-gray-400 mb-6">
-          Showing {filteredProducts.length > 0 ? `${indexOfFirstItem + 1}-${Math.min(indexOfLastItem, filteredProducts.length)}` : '0'} of {filteredProducts.length} products
-          {searchTerm && ` matching "${searchTerm}"`}
+          Showing {products.length} of {totalProducts} products
+          {debouncedSearchTerm && ` matching "${debouncedSearchTerm}"`}
           {selectedCategory !== 'all' && ` in ${getCategoryDisplayName(selectedCategory)}`}
           {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
         </div>
 
-        {filteredProducts.length === 0 ? (
+        {products.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-gray-400 text-lg mb-4">
               No products found
-              {searchTerm && ` for "${searchTerm}"`}
+              {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
               {selectedCategory !== 'all' && ` in ${getCategoryDisplayName(selectedCategory)}`}
             </div>
             <button
               onClick={() => {
                 setSelectedCategory('all')
                 setSearchTerm('')
+                setDebouncedSearchTerm('')
+                setCurrentPage(1)
               }}
-              className="bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-[0_0_15px_rgba(0,255,0,0.3)] transition-all duration-300"
+              className="bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg hover:bg-[#00ff00]/90 transition-all duration-300"
             >
               Show All Products
             </button>
@@ -282,29 +259,24 @@ function Products() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {currentProducts.map((product) => (
+              {products.map((product) => (
                 <div
                   key={product.id}
                   className="bg-gradient-to-b from-[#111111] to-[#1a1a1a] border border-[#00ff00]/20 rounded-2xl p-4 hover:border-[#00ff00]/40 hover:shadow-lg hover:shadow-[#00ff00]/10 transition-all duration-300 group"
                 >
-
                   <div className="relative h-64 mb-4 overflow-hidden rounded-xl bg-[#1a1a1a]">
                     <img
                       src={getImageUrl(product.image)}
                       alt={product.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       onError={(e) => {
-                        console.error('Image failed to load:', product.image)
                         e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found'
                         e.target.className = 'w-full h-full object-contain bg-gray-800 p-4'
                       }}
                     />
-
-                    {/* Wishlist Button - Top Right */}
                     <div className="absolute top-2 right-2 z-10">
                       <WishlistButton product={product} size="sm" />
                     </div>
-
                     {product.discount && (
                       <div className="absolute top-2 left-2 bg-[#00ff00] text-black font-bold px-2 py-1 rounded text-xs">
                         {product.discount}
@@ -317,7 +289,6 @@ function Products() {
                     )}
                   </div>
 
-                  {/* product-info */}
                   <div className="p-2">
                     <h3 className="text-white font-poppins font-semibold text-sm mb-2 line-clamp-2 min-h-[2.8rem]">
                       {product.name}
@@ -363,7 +334,6 @@ function Products() {
               ))}
             </div>
 
-            {/* Pagination - Only show if more than 1 page */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center space-x-2 mt-12 pb-8">
                 <button

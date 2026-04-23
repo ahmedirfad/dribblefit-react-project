@@ -1,25 +1,28 @@
 // src/Pages/Profile.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../Contexts/AuthContext';
-import { useCart } from '../Contexts/CartContext'; // ADD THIS
+import { useCart } from '../Contexts/CartContext';
 import { Link } from 'react-router-dom';
 import Navbar from '../Components/Layout/Navbar';
 import Footer from '../Components/Layout/Footer';
 
 function Profile() {
   const { user, updateUser, isAuthenticated } = useAuth();
-  const { cartItems } = useCart(); // ADD THIS - for live cart updates
+  const { cartItems } = useCart();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     username: '',
     email: '',
     phone: '',
     fullName: '',
-    dateOfBirth: ''
+    dateOfBirth: '',
+    profilePhoto: ''
   });
   const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [previewPhoto, setPreviewPhoto] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Get saved addresses and orders from user
   const savedAddresses = user?.addresses || [];
@@ -32,34 +35,36 @@ function Profile() {
         email: user.email || '',
         phone: user.phone || '',
         fullName: user.fullName || '',
-        dateOfBirth: user.dateOfBirth || ''
+        dateOfBirth: user.dateOfBirth || '',
+        profilePhoto: user.profilePhoto || ''
       });
+      setPreviewPhoto(user.profilePhoto || null);
     }
   }, [user]);
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.username.trim()) {
       newErrors.username = 'Username is required';
     } else if (formData.username.length < 3) {
       newErrors.username = 'Username must be at least 3 characters';
     }
-    
+
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Please enter a valid email';
     }
-    
+
     if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
       newErrors.phone = 'Phone number must be 10 digits';
     }
-    
+
     if (formData.fullName && formData.fullName.length < 2) {
       newErrors.fullName = 'Full name must be at least 2 characters';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,17 +72,17 @@ function Profile() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
-    
+
     // Format phone number (only numbers, max 10)
     if (name === 'phone') {
       processedValue = value.replace(/\D/g, '').slice(0, 10);
     }
-    
+
     setFormData({
       ...formData,
       [name]: processedValue
     });
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors({
@@ -87,57 +92,61 @@ function Profile() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validateForm()) {
-      setSuccessMessage('Please fix the errors in the form');
-      return;
-    }
-    
-    setLoading(true);
-    
-    try {
-      // Create updated user object with all fields
-      const updatedUserData = {
-        ...user, // Keep all existing user data
-        username: formData.username,
-        email: formData.email,
-        phone: formData.phone,
-        fullName: formData.fullName,
-        dateOfBirth: formData.dateOfBirth
-      };
-      
-      const result = await updateUser(updatedUserData);
-      
-      if (result.success) {
-        setSuccessMessage('Profile updated successfully!');
-        setIsEditing(false);
-        
-        setTimeout(() => {
-          setSuccessMessage('');
-        }, 3000);
-      } else {
-        setSuccessMessage(`Error: ${result.error}`);
+  // Handle profile photo upload
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        showToast('Image size should be less than 2MB', 'error');
+        return;
       }
-    } catch (error) {
-      console.error('Update error:', error);
-      setSuccessMessage('Failed to update profile. Please try again.');
-    } finally {
-      setLoading(false);
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        showToast('Please upload an image file', 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setPreviewPhoto(base64String);
+        setFormData({
+          ...formData,
+          profilePhoto: base64String
+        });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
+  // Remove profile photo
+  const removePhoto = () => {
+    setPreviewPhoto(null);
+    setFormData({
+      ...formData,
+      profilePhoto: ''
+    });
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    await handleSaveClick()
+  }
+
   const showToast = (message, type = 'success') => {
     const notification = document.createElement('div');
-    notification.className = `fixed top-4 right-4 font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce ${
-      type === 'success' ? 'bg-[#00ff00] text-black' : 
-      type === 'error' ? 'bg-red-500 text-white' : 
-      'bg-yellow-500 text-black'
-    }`;
+    notification.className = `fixed top-4 right-4 font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce ${type === 'success' ? 'bg-[#00ff00] text-black' :
+        type === 'error' ? 'bg-red-500 text-white' :
+          'bg-yellow-500 text-black'
+      }`;
     notification.textContent = message;
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
       if (document.body.contains(notification)) {
         document.body.removeChild(notification);
@@ -145,15 +154,39 @@ function Profile() {
     }, 3000);
   };
 
-  const handleSaveClick = () => {
-    if (validateForm()) {
-      handleSubmit(new Event('submit'));
-    } else {
-      showToast('Please fix the errors in the form', 'error');
+  const handleSaveClick = async () => {
+    if (!validateForm()) {
+      showToast('Please fix the errors in the form', 'error')
+      return
     }
-  };
 
-  // Calculate total cart items from CartContext
+    setLoading(true)
+    try {
+      const updatedUserData = {
+        username: formData.username,
+        email: formData.email,
+        phone: formData.phone,
+        fullName: formData.fullName,
+        dateOfBirth: formData.dateOfBirth,
+        profilePhoto: formData.profilePhoto
+      }
+
+      const result = await updateUser(updatedUserData)
+
+      if (result.success) {
+        showToast('Profile updated successfully!')
+        setIsEditing(false)
+        setTimeout(() => setSuccessMessage(''), 3000)
+      } else {
+        showToast(`Error: ${result.error}`, 'error')
+      }
+    } catch (error) {
+      showToast('Failed to update profile. Please try again.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const cartItemCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   if (!isAuthenticated) {
@@ -188,11 +221,10 @@ function Profile() {
 
           {/* Success/Error Message */}
           {successMessage && (
-            <div className={`mb-6 p-4 rounded-lg ${
-              successMessage.includes('Error') || successMessage.includes('fix') 
-                ? 'bg-red-500/20 text-red-400' 
+            <div className={`mb-6 p-4 rounded-lg ${successMessage.includes('Error') || successMessage.includes('fix')
+                ? 'bg-red-500/20 text-red-400'
                 : 'bg-[#00ff00]/20 text-[#00ff00]'
-            }`}>
+              }`}>
               {successMessage}
             </div>
           )}
@@ -201,14 +233,55 @@ function Profile() {
             {/* Left Sidebar */}
             <div className="lg:col-span-1">
               <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-6 sticky top-24">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center font-bold text-black text-2xl">
-                    {user?.username?.charAt(0).toUpperCase() || 'U'}
+                {/* Profile Photo Section */}
+                <div className="flex flex-col items-center mb-6">
+                  <div className="relative group">
+                    <div className="w-24 h-24 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center overflow-hidden">
+                      {previewPhoto ? (
+                        <img
+                          src={previewPhoto}
+                          alt="Profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <span className="text-black text-3xl font-bold">
+                          {user?.username?.charAt(0).toUpperCase() || 'U'}
+                        </span>
+                      )}
+                    </div>
+                    {isEditing && (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="absolute -bottom-2 -right-2 bg-[#00ff00] text-black rounded-full p-1.5 shadow-lg hover:bg-[#00ff00]/80 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
-                  <div>
-                    <div className="text-white font-poppins font-bold text-lg">{user?.username}</div>
-                    <div className="text-gray-400 text-sm truncate max-w-[180px]">{user?.email}</div>
-                  </div>
+
+                  {/* Hidden file input */}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="hidden"
+                  />
+
+                  {isEditing && previewPhoto && (
+                    <button
+                      onClick={removePhoto}
+                      className="mt-2 text-red-400 text-xs hover:text-red-300 transition-colors"
+                    >
+                      Remove Photo
+                    </button>
+                  )}
+
+                  <div className="text-white font-poppins font-bold text-lg mt-3">{user?.username}</div>
+                  <div className="text-gray-400 text-sm truncate max-w-[180px]">{user?.email}</div>
                 </div>
 
                 <div className="space-y-1">
@@ -244,15 +317,17 @@ function Profile() {
                   <button
                     onClick={() => {
                       if (isEditing) {
-                        // Reset form data to original user data when cancelling
                         setFormData({
                           username: user.username || '',
                           email: user.email || '',
                           phone: user.phone || '',
                           fullName: user.fullName || '',
-                          dateOfBirth: user.dateOfBirth || ''
+                          dateOfBirth: user.dateOfBirth || '',
+                          profilePhoto: user.profilePhoto || ''
                         });
+                        setPreviewPhoto(user.profilePhoto || null);
                         setErrors({});
+                        if (fileInputRef.current) fileInputRef.current.value = '';
                       }
                       setIsEditing(!isEditing);
                     }}
@@ -276,9 +351,8 @@ function Profile() {
                             name="username"
                             value={formData.username}
                             onChange={handleChange}
-                            className={`w-full bg-[#1a1a1a] border ${
-                              errors.username ? 'border-red-500' : 'border-gray-700'
-                            } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
+                            className={`w-full bg-[#1a1a1a] border ${errors.username ? 'border-red-500' : 'border-gray-700'
+                              } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
                             required
                           />
                           {errors.username && (
@@ -304,9 +378,8 @@ function Profile() {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            className={`w-full bg-[#1a1a1a] border ${
-                              errors.email ? 'border-red-500' : 'border-gray-700'
-                            } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
+                            className={`w-full bg-[#1a1a1a] border ${errors.email ? 'border-red-500' : 'border-gray-700'
+                              } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
                             required
                           />
                           {errors.email && (
@@ -330,9 +403,8 @@ function Profile() {
                             name="fullName"
                             value={formData.fullName}
                             onChange={handleChange}
-                            className={`w-full bg-[#1a1a1a] border ${
-                              errors.fullName ? 'border-red-500' : 'border-gray-700'
-                            } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
+                            className={`w-full bg-[#1a1a1a] border ${errors.fullName ? 'border-red-500' : 'border-gray-700'
+                              } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
                             placeholder="Enter your full name"
                           />
                           {errors.fullName && (
@@ -356,9 +428,8 @@ function Profile() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleChange}
-                            className={`w-full bg-[#1a1a1a] border ${
-                              errors.phone ? 'border-red-500' : 'border-gray-700'
-                            } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
+                            className={`w-full bg-[#1a1a1a] border ${errors.phone ? 'border-red-500' : 'border-gray-700'
+                              } text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] transition-colors`}
                             placeholder="Enter 10-digit phone number"
                             maxLength="10"
                           />
@@ -392,12 +463,12 @@ function Profile() {
                         />
                       ) : (
                         <div className="bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg min-h-[48px] flex items-center">
-                          {formData.dateOfBirth 
+                          {formData.dateOfBirth
                             ? new Date(formData.dateOfBirth).toLocaleDateString('en-IN', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric'
-                              })
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric'
+                            })
                             : 'Not set'}
                         </div>
                       )}
@@ -415,9 +486,12 @@ function Profile() {
                             email: user.email || '',
                             phone: user.phone || '',
                             fullName: user.fullName || '',
-                            dateOfBirth: user.dateOfBirth || ''
+                            dateOfBirth: user.dateOfBirth || '',
+                            profilePhoto: user.profilePhoto || ''
                           });
+                          setPreviewPhoto(user.profilePhoto || null);
                           setErrors({});
+                          if (fileInputRef.current) fileInputRef.current.value = '';
                         }}
                         className="bg-transparent border border-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors"
                       >
@@ -443,11 +517,10 @@ function Profile() {
                   )}
                 </form>
 
-                {/* Stats Section - UPDATED */}
+                {/* Stats Section */}
                 <div className="mt-12 pt-8 border-t border-gray-800">
                   <h3 className="text-xl font-bold text-white font-poppins mb-6">Account Statistics</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {/* Cart Stats - LIVE UPDATES */}
                     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#00ff00]/20 rounded-xl p-6 text-center hover:border-[#00ff00]/40 transition-all duration-300 hover:scale-[1.02]">
                       <div className="text-3xl font-bold text-[#00ff00] mb-2">
                         {cartItemCount}
@@ -463,8 +536,7 @@ function Profile() {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Orders Stats */}
+
                     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#00ff00]/20 rounded-xl p-6 text-center hover:border-[#00ff00]/40 transition-all duration-300 hover:scale-[1.02]">
                       <div className="text-3xl font-bold text-[#00ff00] mb-2">
                         {savedOrders.length}
@@ -480,8 +552,7 @@ function Profile() {
                         )}
                       </div>
                     </div>
-                    
-                    {/* Addresses Stats */}
+
                     <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-[#00ff00]/20 rounded-xl p-6 text-center hover:border-[#00ff00]/40 transition-all duration-300 hover:scale-[1.02]">
                       <div className="text-3xl font-bold text-[#00ff00] mb-2">
                         {savedAddresses.length}

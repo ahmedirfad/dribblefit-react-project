@@ -48,7 +48,7 @@ function FAQ() {
       },
       {
         question: 'Do you offer bulk discounts for team orders?',
-        answer: 'Yes! We offer special discounts for team orders (10+ jerseys). Contact our sales team at teamorders@jerseystore.com for customized pricing.',
+        answer: 'Yes! We offer special discounts for team orders (10+ jerseys). Contact our sales team at dribblefit10@gmail.com for customized pricing.',
         tags: ['bulk', 'teams']
       },
       {
@@ -235,7 +235,7 @@ function FAQ() {
       },
       {
         question: 'Can I get a custom design or logo?',
-        answer: 'For custom designs or team logos, please contact our custom orders team at custom@jerseystore.com for bulk orders (minimum 10 jerseys).',
+        answer: 'For custom designs or team logos, please contact our custom orders team at dribblefit10@gmail.com for bulk orders (minimum 10 jerseys).',
         tags: ['design', 'teams']
       }
     ]
@@ -256,7 +256,6 @@ function FAQ() {
   // Get filtered FAQs
   const getFilteredFAQs = () => {
     if (activeCategory === 'all') {
-      // Combine all FAQs
       const allFAQs = [];
       Object.entries(faqs).forEach(([categoryId, categoryFAQs]) => {
         categoryFAQs.forEach((faq, index) => {
@@ -268,7 +267,6 @@ function FAQ() {
         });
       });
       
-      // Filter by search term if present
       if (searchTerm.trim()) {
         return allFAQs.filter(faq => 
           faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -279,10 +277,8 @@ function FAQ() {
       
       return allFAQs;
     } else {
-      // Get FAQs for specific category
       let categoryFAQs = faqs[activeCategory] || [];
       
-      // Filter by search term if present
       if (searchTerm.trim()) {
         categoryFAQs = categoryFAQs.filter(faq => 
           faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -566,7 +562,7 @@ function FAQ() {
                       Contact Support
                     </Link>
                     <a 
-                      href="mailto:support@jerseystore.com"
+                      href="mailto:dribblefit10@gmail.com"
                       className="bg-transparent border border-gray-700 text-white px-6 py-3 rounded-lg hover:bg-gray-800 transition-colors text-center"
                     >
                       Email Us
@@ -575,25 +571,25 @@ function FAQ() {
                 </div>
               </div>
 
-              {/* Contact Information */}
+              {/* Contact Information - UPDATED */}
               <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center">
+                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center hover:border-[#00ff00]/30 transition-all duration-300">
                   <div className="text-[#00ff00] text-3xl mb-4">📧</div>
                   <div className="text-white font-semibold mb-2">Email Support</div>
-                  <div className="text-gray-400 text-sm">support@jerseystore.com</div>
+                  <div className="text-gray-400 text-sm">dribblefit10@gmail.com</div>
                   <div className="text-gray-500 text-xs mt-2">Response within 24 hours</div>
                 </div>
-                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center">
+                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center hover:border-[#00ff00]/30 transition-all duration-300">
                   <div className="text-[#00ff00] text-3xl mb-4">📞</div>
                   <div className="text-white font-semibold mb-2">Call Us</div>
-                  <div className="text-gray-400 text-sm">+91 98765 43210</div>
-                  <div className="text-gray-500 text-xs mt-2">Mon-Sat: 9 AM - 7 PM</div>
+                  <div className="text-gray-400 text-sm">+91 7736919863</div>
+                  <div className="text-gray-500 text-xs mt-2">Mon-Sat: 10 AM - 7 PM</div>
                 </div>
-                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center">
-                  <div className="text-[#00ff00] text-3xl mb-4">💬</div>
-                  <div className="text-white font-semibold mb-2">Live Chat</div>
-                  <div className="text-gray-400 text-sm">Available on website</div>
-                  <div className="text-gray-500 text-xs mt-2">Click the chat icon below</div>
+                <div className="bg-[#111111] border border-gray-800 rounded-xl p-6 text-center hover:border-[#00ff00]/30 transition-all duration-300">
+                  <div className="text-[#00ff00] text-3xl mb-4">🏢</div>
+                  <div className="text-white font-semibold mb-2">Visit Us</div>
+                  <div className="text-gray-400 text-sm">Kinfa Building, Kakkanchery</div>
+                  <div className="text-gray-500 text-xs mt-2">Chelembra, Malappuram, KL 673635</div>
                 </div>
               </div>
             </div>

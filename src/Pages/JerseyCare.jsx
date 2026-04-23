@@ -175,11 +175,11 @@ function JerseyCare() {
           importance: 'high'
         },
         {
-        step: 2,
-        title: 'Use Padded Hangers',
-        description: 'Store on wide, padded hangers to maintain shoulder shape and prevent creases.',
-        icon: '👔',
-        importance: 'medium'
+          step: 2,
+          title: 'Use Padded Hangers',
+          description: 'Store on wide, padded hangers to maintain shoulder shape and prevent creases.',
+          icon: '👔',
+          importance: 'medium'
         },
         {
           step: 3,
@@ -352,7 +352,7 @@ function JerseyCare() {
   const activeContent = careInstructions[activeTab];
 
   const getImportanceColor = (importance) => {
-    switch(importance) {
+    switch (importance) {
       case 'critical': return 'bg-red-500/20 text-red-400 border-red-500/30';
       case 'high': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30';
       case 'medium': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
@@ -388,11 +388,10 @@ function JerseyCare() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${
-                        activeTab === tab.id
+                      className={`w-full flex items-center gap-3 p-4 rounded-xl transition-all duration-300 ${activeTab === tab.id
                           ? 'bg-[#00ff00] text-black font-bold'
                           : 'bg-[#1a1a1a] text-gray-300 hover:bg-gray-800'
-                      }`}
+                        }`}
                     >
                       <span className="text-2xl">{tab.icon}</span>
                       <span className="text-left">{tab.label}</span>
@@ -491,7 +490,7 @@ function JerseyCare() {
                 {/* Steps */}
                 <div className="space-y-6">
                   {activeContent.steps.map((step) => (
-                    <div 
+                    <div
                       key={step.step}
                       className={`border rounded-xl p-6 ${getImportanceColor(step.importance)}`}
                     >
@@ -506,12 +505,11 @@ function JerseyCare() {
                             <div className="text-white font-poppins font-semibold text-lg">
                               Step {step.step}: {step.title}
                             </div>
-                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              step.importance === 'critical' ? 'bg-red-500/20 text-red-400' :
-                              step.importance === 'high' ? 'bg-yellow-500/20 text-yellow-400' :
-                              step.importance === 'medium' ? 'bg-blue-500/20 text-blue-400' :
-                              'bg-green-500/20 text-green-400'
-                            }`}>
+                            <span className={`px-3 py-1 rounded-full text-xs font-semibold ${step.importance === 'critical' ? 'bg-red-500/20 text-red-400' :
+                                step.importance === 'high' ? 'bg-yellow-500/20 text-yellow-400' :
+                                  step.importance === 'medium' ? 'bg-blue-500/20 text-blue-400' :
+                                    'bg-green-500/20 text-green-400'
+                              }`}>
                               {step.importance.toUpperCase()}
                             </span>
                           </div>
@@ -547,7 +545,7 @@ function JerseyCare() {
                 <h2 className="text-2xl font-bold text-white font-poppins mb-6">Fabric Types & Care</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {fabricTypes.map((fabric, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6"
                     >
@@ -567,7 +565,7 @@ function JerseyCare() {
                 <h2 className="text-2xl font-bold text-white font-poppins mb-6">Common Mistakes to Avoid</h2>
                 <div className="space-y-6">
                   {commonMistakes.map((mistake, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="bg-[#1a1a1a] border border-gray-800 rounded-xl p-6"
                     >
@@ -591,7 +589,7 @@ function JerseyCare() {
                 <h2 className="text-2xl font-bold text-white font-poppins mb-6">Jersey Care Schedule</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {careSchedule.map((schedule, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="bg-gradient-to-br from-[#00ff00]/10 to-emerald-600/10 border border-[#00ff00]/30 rounded-xl p-6"
                     >
@@ -625,9 +623,13 @@ function JerseyCare() {
                       Download our comprehensive care guide to keep with your jerseys
                     </div>
                   </div>
-                  <button className="bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg hover:bg-[#00ff00]/90 transition-colors">
+                  <a
+                    href="/jersey-care-guide.pdf"
+                    download
+                    className="bg-[#00ff00] text-black font-bold px-6 py-3 rounded-lg hover:bg-[#00ff00]/90 transition-colors inline-block text-center"
+                  >
                     Download PDF Guide
-                  </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -642,13 +644,13 @@ function JerseyCare() {
                 Now that you know how to care for your jerseys, why not add more to your collection?
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link 
+                <Link
                   to="/products"
                   className="bg-[#00ff00] text-black font-bold px-8 py-4 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)] transition-all duration-300"
                 >
                   Shop New Jerseys
                 </Link>
-                <Link 
+                <Link
                   to="/contact"
                   className="bg-transparent border-2 border-[#00ff00] text-[#00ff00] font-bold px-8 py-4 rounded-lg hover:bg-[#00ff00]/10 transition-all duration-300"
                 >

@@ -54,7 +54,7 @@ const EditProduct = () => {
   const fetchProduct = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/products/${id}`)
+      const response = await api.get(`/admin/products/${id}`)
       const productData = response.data || response
       
       setProduct(productData)
@@ -127,7 +127,7 @@ const EditProduct = () => {
         discount: formData.discount ? `${formData.discount}% OFF` : undefined
       }
 
-      await api.patch(`/products/${id}`, productData)
+      await api.put(`/admin/products/${id}`, productData)
       
       showNotification('Product updated successfully!', 'success')
       

@@ -1,71 +1,62 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../Contexts/CartContext'
 import WishlistButton from '../Common/WishlistButton'
+import api from '../../api/Axios'  // Add this import
 
 function BestSellers() {
   const navigate = useNavigate()
   const { addToCart } = useCart()
-  const [imageIndex, setImageIndex] = useState({ 1: 0, 2: 0, 3: 0 })
+  const [imageIndex, setImageIndex] = useState({})
+  const [settings, setSettings] = useState({
+    is_active: true,
+    section_title: 'BEST',
+    highlighted_text: 'SELLERS',
+    section_subtitle: 'Discover our most popular football jerseys loved by fans worldwide',
+    view_all_button_text: 'VIEW ALL PRODUCTS',
+    view_all_button_link: '/products',
+    products: []
+  })
+  const [loading, setLoading] = useState(true)
 
-  // Update the bestSellers data structure to have proper 'id' field
-  const bestSellers = [
-    {
-      id: 7, // Use productId as id for WishlistButton
-      bestsellerId: 1,
-      name: "AS ROMA 2025/26 THIRD JERSEY",
-      price: "₹899",
-      images: [
-        "src/assets/roma-third-1.webp", 
-        "src/assets/romaa.webp", 
-        "src/assets/romaaa.webp",
-      ],
-      team: "AS Roma",
-      inStock: true,
-      sizes: ['M', 'L', 'XL']
-    },
-    {
-      id: 6, // Use productId as id for WishlistButton
-      bestsellerId: 2,
-      name: "REAL MADRID 2025/26 THIRD KIT",
-      price: "₹1099",
-      images: [
-        "src/assets/real-third.webp", 
-        "src/assets/realll.webp", 
-        "src/assets/realll-1.webp", 
-      ],
-      team: "Real Madrid",
-      inStock: true,
-      sizes: ['S', 'M', 'L', 'XL']
-    },
-    {
-      id: 2, // Use productId as id for WishlistButton
-      bestsellerId: 3,
-      name: "LIVERPOOL 2025/26 AWAY JERSEY",
-      price: "₹999",
-      images: [
-        "public/images/liv-newaway.webp", 
-        "src/assets/LIV-1.webp", 
-        "src/assets/LIV-2.webp"
-      ],
-      team: "Liverpool",
-      inStock: true,
-      sizes: ['S', 'M', 'L', 'XL']
+  // ✅ Load settings from BACKEND API
+  useEffect(() => {
+    fetchBestSellersSettings()
+  }, [])
+
+  const fetchBestSellersSettings = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/admin/home/sections/bestsellers')
+      
+      if (response.data.success && response.data.section) {
+        setSettings(response.data.section)
+        // Initialize imageIndex for all products
+        const initialIndex = {}
+        response.data.section.products.forEach((_, idx) => {
+          initialIndex[idx] = 0
+        })
+        setImageIndex(initialIndex)
+      }
+    } catch (error) {
+      console.error('Error fetching best sellers:', error)
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const handleImageHover = (bestsellerId) => {
+  const handleImageHover = (productIndex) => {
     setImageIndex(prev => ({
       ...prev,
-      [bestsellerId]: (prev[bestsellerId] + 1) % 3
+      [productIndex]: ((prev[productIndex] || 0) + 1) % 3
     }))
   }
 
   const handleShopNow = () => {
-    navigate('/products')
+    navigate(settings.view_all_button_link)
   }
 
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product, productIndex) => {
     if (!product.inStock) {
       const notification = document.createElement('div')
       notification.className = 'fixed top-4 right-4 bg-red-500 text-white font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
@@ -79,10 +70,10 @@ function BestSellers() {
     }
     
     const cartProduct = {
-      id: product.id, // Use product.id instead of product.productId
+      id: product.id,
       name: product.name,
       price: product.price,
-      image: product.images[0],
+      image: product.images?.[0] || '',
       team: product.team,
       inStock: product.inStock
     }
@@ -90,9 +81,9 @@ function BestSellers() {
     addToCart(cartProduct, 'M', 1)
     
     const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
-      notification.textContent = `Added ${product.name} to cart!`
-      document.body.appendChild(notification)
+    notification.className = 'fixed top-4 right-4 bg-[#00ff00] text-black font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce'
+    notification.textContent = `Added ${product.name} to cart!`
+    document.body.appendChild(notification)
     
     setTimeout(() => {
       document.body.removeChild(notification)
@@ -103,53 +94,56 @@ function BestSellers() {
     navigate(`/product/${productId}`)
   }
 
+  if (loading) {
+    return (
+      <div className="bg-gradient-to-br from-[#0a0a0a] to-[#001a00] py-20 px-4">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="text-[#00ff00] text-lg">Loading best sellers...</div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!settings.is_active || settings.products.length === 0) return null
+
   return (
     <div className="bg-gradient-to-br from-[#0a0a0a] to-[#001a00] py-20 px-4 border-y border-[#00ff00]/10">
       <div className="max-w-7xl mx-auto">
         
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-bold text-white font-poppins mb-4">
-            BEST <span className="text-[#00ff00]">SELLERS</span>
+            {settings.section_title} <span className="text-[#00ff00]">{settings.highlighted_text}</span>
           </h2>
           <p className="text-gray-400 text-lg font-poppins max-w-2xl mx-auto">
-            Discover our most popular football jerseys loved by fans worldwide
+            {settings.section_subtitle}
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {bestSellers.map((product) => (
+          {settings.products.map((product, idx) => (
             <div 
-              key={product.bestsellerId}
+              key={product.id}
               className="bg-gradient-to-b from-[#111111] to-[#1a1a1a] border border-[#00ff00]/20 rounded-2xl p-6 hover:border-[#00ff00]/40 hover:shadow-lg hover:shadow-[#00ff00]/10 transition-all duration-300 flex flex-col group"
             >
               
               <div 
                 className="relative h-80 mb-6 overflow-hidden rounded-xl bg-[#1a1a1a] cursor-pointer flex-shrink-0"
-                onMouseEnter={() => handleImageHover(product.bestsellerId)}
-                onClick={() => handleViewDetails(product.id)} // Use product.id
+                onMouseEnter={() => handleImageHover(idx)}
+                onClick={() => handleViewDetails(product.id)}
               >
                 <div className="relative w-full h-full">
-                  <img 
-                    src={product.images[0]} 
-                    alt={product.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-                      imageIndex[product.bestsellerId] === 0 ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
-                    }`}
-                  />
-                  <img 
-                    src={product.images[1]} 
-                    alt={product.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-                      imageIndex[product.bestsellerId] === 1 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-                    }`}
-                  />
-                  <img 
-                    src={product.images[2]} 
-                    alt={product.name}
-                    className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
-                      imageIndex[product.bestsellerId] === 2 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'
-                    }`}
-                  />
+                  {product.images && product.images.map((img, imgIdx) => (
+                    img && (
+                      <img 
+                        key={imgIdx}
+                        src={img} 
+                        alt={product.name}
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-500 ${
+                          (imageIndex[idx] || 0) === imgIdx ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
+                        }`}
+                      />
+                    )
+                  ))}
                 </div>
 
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
@@ -157,15 +151,15 @@ function BestSellers() {
                     <div 
                       key={dotIndex}
                       className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                        imageIndex[product.bestsellerId] === dotIndex ? 'bg-[#00ff00]' : 'bg-gray-600'
+                        (imageIndex[idx] || 0) === dotIndex ? 'bg-[#00ff00]' : 'bg-gray-600'
                       }`}
                     />
                   ))}
                 </div>
 
-                {/* Wishlist Button - Top Right */}
+                {/* Wishlist Button */}
                 <div className="absolute top-3 right-3 z-10">
-                  <WishlistButton product={product} size="sm" />
+                  <WishlistButton product={{...product, id: product.id}} size="sm" />
                 </div>
 
                 <div className="absolute top-3 left-3 bg-black/70 text-white text-xs px-2 py-1 rounded">
@@ -200,7 +194,7 @@ function BestSellers() {
                 
                 <div className="mt-auto flex gap-2">
                   <button 
-                    onClick={() => handleAddToCart(product)}
+                    onClick={() => handleAddToCart(product, idx)}
                     disabled={!product.inStock}
                     className={`flex-1 font-poppins font-bold py-3 rounded-lg transition-all duration-300 text-sm uppercase tracking-wider group/btn ${
                       product.inStock 
@@ -213,7 +207,7 @@ function BestSellers() {
                     </span>
                   </button>
                   <button 
-                    onClick={() => handleViewDetails(product.id)} // Use product.id
+                    onClick={() => handleViewDetails(product.id)}
                     className="px-4 bg-transparent border border-[#00ff00] text-[#00ff00] font-poppins font-bold py-3 rounded-lg hover:bg-[#00ff00] hover:text-black transition-all duration-300 text-sm"
                   >
                     View
@@ -230,7 +224,7 @@ function BestSellers() {
             onClick={handleShopNow}
             className="border-2 border-[#00ff00] text-[#00ff00] font-poppins font-bold px-12 py-4 rounded-lg hover:bg-[#00ff00] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,0,0.3)] transition-all duration-300 text-sm uppercase tracking-wider"
           >
-            VIEW ALL PRODUCTS
+            {settings.view_all_button_text}
           </button>
         </div>
 

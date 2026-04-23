@@ -5,15 +5,16 @@ import { useCart } from '../Contexts/CartContext'
 import { useAuth } from '../Contexts/AuthContext'
 import Navbar from '../Components/Layout/Navbar'
 import Footer from '../Components/Layout/Footer'
+import RazorpayPayment from '../Components/Checkout/RazorpayPayment'
 
 function CheckoutPage() {
   const { isAuthenticated, user } = useAuth()
   const navigate = useNavigate()
   const { cartItems, getCartTotal, getCouponDiscount, getFinalTotal, appliedCoupon, clearCart } = useCart()
-  
+
   const [checkingAuth, setCheckingAuth] = useState(true)
   const [isProcessingOrder, setIsProcessingOrder] = useState(false)
-  
+
   // Store order summary for success page
   const [orderSummary, setOrderSummary] = useState({
     items: [],
@@ -67,7 +68,7 @@ function CheckoutPage() {
   useEffect(() => {
     if (user) {
       const defaultAddress = savedAddresses.find(addr => addr.isDefault)
-      
+
       if (defaultAddress) {
         setState(prev => ({
           ...prev,
@@ -158,12 +159,42 @@ function CheckoutPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target
     let processedValue = value
-    
-    if (name === 'phone' || name === 'pincode') {
+
+    // Name validation - no spaces at start, minimum 3 letters
+    if (name === 'name') {
+      // Remove spaces from beginning
+      let trimmedValue = value.replace(/^\s+/, '')
+
+      // Allow only letters and spaces (no numbers or special chars)
+      trimmedValue = trimmedValue.replace(/[^a-zA-Z\s]/g, '')
+
+      // Check if value has valid length after trimming
+      if (trimmedValue.length > 0 && trimmedValue.length < 3) {
+        setState(prev => ({
+          ...prev,
+          formErrors: { ...prev.formErrors, name: 'Name must be at least 3 letters' }
+        }))
+      } else if (trimmedValue.length === 0 && value.length > 0) {
+        setState(prev => ({
+          ...prev,
+          formErrors: { ...prev.formErrors, name: 'Name cannot start with space' }
+        }))
+      } else {
+        setState(prev => ({
+          ...prev,
+          formErrors: { ...prev.formErrors, name: '' }
+        }))
+      }
+
+      processedValue = trimmedValue
+    }
+
+    // Phone validation
+    else if (name === 'phone' || name === 'pincode') {
       processedValue = value.replace(/\D/g, '').slice(0, name === 'phone' ? 10 : 6)
-      
+
       if ((name === 'phone' && processedValue.length < 10 && processedValue.length > 0) ||
-          (name === 'pincode' && processedValue.length < 6 && processedValue.length > 0)) {
+        (name === 'pincode' && processedValue.length < 6 && processedValue.length > 0)) {
         setState(prev => ({
           ...prev,
           formErrors: { ...prev.formErrors, [name]: `${name === 'phone' ? 'Phone number' : 'Pincode'} must be ${name === 'phone' ? '10' : '6'} digits` }
@@ -175,7 +206,15 @@ function CheckoutPage() {
         }))
       }
     }
-    
+
+    // Other fields (no validation changes)
+    else {
+      setState(prev => ({
+        ...prev,
+        formErrors: { ...prev.formErrors, [name]: '' }
+      }))
+    }
+
     updateFormData(name, processedValue || value)
   }
 
@@ -183,9 +222,9 @@ function CheckoutPage() {
     const value = e.target.value
     const upiPattern = /^[a-zA-Z0-9.\-_]{2,256}@[a-zA-Z]{2,64}$/
     const phonePattern = /^[6-9]\d{9}$/
-    
+
     setState(prev => ({ ...prev, upiId: value }))
-    
+
     if (value.trim() === '') {
       setState(prev => ({ ...prev, formErrors: { ...prev.formErrors, upiId: '' } }))
     } else if (!upiPattern.test(value) && !phonePattern.test(value.replace(/\D/g, ''))) {
@@ -197,8 +236,8 @@ function CheckoutPage() {
 
   const handleCardInput = (type, value) => {
     let formattedValue = value.replace(/\D/g, '')
-    
-    switch(type) {
+
+    switch (type) {
       case 'cardNumber':
         formattedValue = formattedValue.slice(0, 16)
         formattedValue = formattedValue.replace(/(\d{4})(?=\d)/g, '$1-')
@@ -213,22 +252,22 @@ function CheckoutPage() {
       default:
         break
     }
-    
+
     setState(prev => ({
       ...prev,
       cardData: { ...prev.cardData, [type]: formattedValue }
     }))
-    
+
     if ((type === 'cardNumber' && formattedValue.replace(/\D/g, '').length < 16 && formattedValue.replace(/\D/g, '').length > 0) ||
-        (type === 'expiry' && formattedValue.replace(/\D/g, '').length < 4 && formattedValue.replace(/\D/g, '').length > 0) ||
-        (type === 'cvv' && formattedValue.length < 3 && formattedValue.length > 0)) {
+      (type === 'expiry' && formattedValue.replace(/\D/g, '').length < 4 && formattedValue.replace(/\D/g, '').length > 0) ||
+      (type === 'cvv' && formattedValue.length < 3 && formattedValue.length > 0)) {
       setState(prev => ({
         ...prev,
-        formErrors: { 
-          ...prev.formErrors, 
-          [type]: `${type === 'cardNumber' ? 'Card number must be 16 digits' : 
-                  type === 'expiry' ? 'Expiry must be MM/YY format' : 
-                  'CVV must be 3 digits'}` 
+        formErrors: {
+          ...prev.formErrors,
+          [type]: `${type === 'cardNumber' ? 'Card number must be 16 digits' :
+            type === 'expiry' ? 'Expiry must be MM/YY format' :
+              'CVV must be 3 digits'}`
         }
       }))
     } else {
@@ -242,26 +281,48 @@ function CheckoutPage() {
   const validateForm = () => {
     const errors = {}
     const { formData } = state
-    
-    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'state', 'pincode']
+
+    // Name validation - trimmed, no spaces at start, at least 3 letters
+    const nameTrimmed = formData.name?.trim()
+    if (!nameTrimmed || nameTrimmed === '') {
+      errors.name = 'Name is required'
+    } else if (nameTrimmed.length < 3) {
+      errors.name = 'Name must be at least 3 letters'
+    } else if (/^\s/.test(formData.name)) {
+      errors.name = 'Name cannot start with space'
+    } else if (/[^a-zA-Z\s]/.test(formData.name)) {
+      errors.name = 'Name can only contain letters and spaces'
+    }
+
+    const requiredFields = ['email', 'phone', 'address', 'city', 'state', 'pincode']
     requiredFields.forEach(field => {
       if (!formData[field] || formData[field].trim() === '') {
         errors[field] = 'This field is required'
       }
     })
-    
+
     if (formData.phone && formData.phone.length !== 10) {
       errors.phone = 'Phone number must be exactly 10 digits'
     }
-    
+
     if (formData.pincode && formData.pincode.length !== 6) {
       errors.pincode = 'Pincode must be exactly 6 digits'
     }
-    
+
     if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
       errors.email = 'Enter a valid email address'
     }
-    
+
+    // City validation - no spaces at start, at least 2 letters
+    if (formData.city && formData.city.trim().length < 2) {
+      errors.city = 'City must be at least 2 letters'
+    }
+
+    // State validation
+    if (formData.state && formData.state.trim().length < 2) {
+      errors.state = 'State must be at least 2 letters'
+    }
+
     if (state.selectedPayment === 'upi') {
       if (!state.upiId.trim()) {
         errors.upiId = 'Please enter UPI ID or Phone Number'
@@ -273,7 +334,7 @@ function CheckoutPage() {
         }
       }
     }
-    
+
     if (state.selectedPayment === 'card') {
       if (state.cardData.cardNumber.replace(/\D/g, '').length !== 16) {
         errors.cardNumber = 'Card number must be 16 digits'
@@ -285,20 +346,19 @@ function CheckoutPage() {
         errors.cvv = 'CVV must be 3 digits'
       }
     }
-    
+
     return errors
   }
 
   const showToast = (message, type = 'success') => {
     const notification = document.createElement('div')
-    notification.className = `fixed top-4 right-4 font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce ${
-      type === 'success' ? 'bg-[#00ff00] text-black' : 
-      type === 'error' ? 'bg-red-500 text-white' : 
-      'bg-yellow-500 text-black'
-    }`
+    notification.className = `fixed top-4 right-4 font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce ${type === 'success' ? 'bg-[#00ff00] text-black' :
+      type === 'error' ? 'bg-red-500 text-white' :
+        'bg-yellow-500 text-black'
+      }`
     notification.textContent = message
     document.body.appendChild(notification)
-    
+
     setTimeout(() => {
       if (document.body.contains(notification)) {
         document.body.removeChild(notification)
@@ -354,40 +414,44 @@ function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     const errors = validateForm()
-    
+
     if (Object.keys(errors).length > 0) {
       setState(prev => ({ ...prev, formErrors: errors }))
       showToast('Please fix the errors in the form', 'error')
       return
     }
-    
-    // SHOW PROCESSING SCREEN IMMEDIATELY
+
+    // For COD - proceed directly
+    if (state.selectedPayment === 'cod') {
+      await processOrder('cod')
+    }
+    // For Razorpay payments - will be handled by RazorpayPayment component
+    // No need to do anything here
+  }
+
+  // New function to process order after payment
+  const processOrder = async (paymentMethod, paymentDetails = null) => {
     setIsProcessingOrder(true)
-    
-    // IMPORTANT: Force React to render the processing screen before continuing
-    await new Promise(resolve => setTimeout(resolve, 100))
-    
+
     try {
       const newOrderNumber = `ORD-${Date.now().toString().slice(-8)}`
-      
-      // Calculate using our helper functions
       const subtotal = calculateSubtotal();
       const discount = parseFloat(getCouponDiscount()) || 0;
-      const codCharges = state.selectedPayment === 'cod' ? 10 : 0;
+      const codCharges = paymentMethod === 'cod' ? 10 : 0;
       const total = subtotal - discount + codCharges;
-      
+
       // Create cart items with proper price format
       const orderItems = cartItems.map(item => {
         const itemPrice = getItemPrice(item);
         const quantity = parseInt(item.quantity) || 1;
         const itemTotal = getItemTotal(item);
-        
+
         return {
           id: item.id,
           name: item.name,
           image: item.image,
-          price: itemPrice, // Unit price including customization
-          priceString: formatPrice(itemPrice), // Formatted price string
+          price: itemPrice,
+          priceString: formatPrice(itemPrice),
           size: item.size,
           quantity: quantity,
           team: item.team,
@@ -396,8 +460,8 @@ function CheckoutPage() {
           total: itemTotal
         };
       });
-      
-      // SAVE ORDER SUMMARY BEFORE CLEARING CART
+
+      // SAVE ORDER SUMMARY
       setOrderSummary({
         items: [...cartItems],
         subtotal: subtotal,
@@ -406,7 +470,7 @@ function CheckoutPage() {
         couponDiscount: discount,
         codCharges: codCharges
       })
-      
+
       // Create order object
       const orderData = {
         id: Date.now().toString(),
@@ -415,13 +479,14 @@ function CheckoutPage() {
         username: user.username,
         userEmail: user.email,
         date: new Date().toISOString(),
-        status: 'Processing',
+        status: 'processing',
         items: orderItems,
         subtotal: parseFloat(subtotal.toFixed(2)),
         discount: parseFloat(discount.toFixed(2)),
         couponDiscount: parseFloat(discount.toFixed(2)),
         total: parseFloat(total.toFixed(2)),
-        paymentMethod: state.selectedPayment,
+        paymentMethod: paymentMethod,
+        paymentDetails: paymentDetails, // Store payment details for Razorpay
         shippingAddress: {
           ...state.formData,
           name: state.formData.name || user.username || ''
@@ -431,58 +496,58 @@ function CheckoutPage() {
         trackingNumber: `TRK${Math.floor(100000000 + Math.random() * 900000000)}`,
         addressSource: state.useSavedAddress ? 'saved_address' : 'manual_entry'
       }
-      
+
       console.log('Order data to save:', orderData)
-      
-      // ADD ARTIFICIAL DELAY TO SHOW PROCESSING SCREEN (2 seconds)
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       // Save order to orders collection
       try {
         const orderResponse = await api.post('/orders', orderData)
         console.log('Order saved to /orders:', orderResponse.data)
       } catch (orderError) {
         console.warn('Could not save to /orders:', orderError.message)
-        // Don't fail the order if this fails
       }
-      
-      // Update user's orders
-      const updatedUserOrders = [...(user.orders || []), orderData]
-      try {
-        await api.patch(`/users/${user.id}`, {
-          orders: updatedUserOrders
-        })
-        console.log('User orders updated')
-      } catch (userError) {
-        console.warn('Could not update user orders:', userError.message)
-        // Don't fail the order if this fails
-      }
-      
+
       // Clear the cart
       if (clearCart) {
         clearCart()
       }
-      
-      // Add small delay before showing success
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      // Update local state to show success page
+
       updateState('orderNumber', newOrderNumber)
       updateState('orderPlaced', true)
       setIsProcessingOrder(false)
-      
+
       showToast('Order placed successfully!', 'success')
-      
+
     } catch (error) {
-      console.error('Order placement error:', error)
+      console.error('Order processing error:', error)
       showToast('Failed to place order. Please try again.', 'error')
       setIsProcessingOrder(false)
     }
   }
 
+  // Handle successful Razorpay payment
+  const handleRazorpaySuccess = async (paymentResponse) => {
+    // Payment is already verified on backend
+    // Now process the order
+    await processOrder('razorpay', {
+      paymentId: paymentResponse.razorpay_payment_id,
+      orderId: paymentResponse.razorpay_order_id,
+      signature: paymentResponse.razorpay_signature
+    })
+  }
+
+  // Handle Razorpay payment failure
+  const handleRazorpayFailure = (error) => {
+    console.error('Razorpay payment failed:', error)
+    showToast('Payment failed. Please try again.', 'error')
+    setIsProcessingOrder(false)
+  }
+
   const handleContinueShopping = () => {
     navigate('/products')
   }
+
+
 
   // Show loading while checking authentication
   if (checkingAuth) {
@@ -514,11 +579,11 @@ function CheckoutPage() {
             <div className="text-gray-400 mb-8">
               Please wait while we confirm your order...
             </div>
-            
+
             <div className="flex justify-center mb-8">
               <div className="w-24 h-24 border-4 border-[#00ff00]/30 border-t-[#00ff00] rounded-full animate-spin"></div>
             </div>
-            
+
             <div className="text-gray-400 text-sm space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <div className="w-2 h-2 bg-[#00ff00] rounded-full"></div>
@@ -542,7 +607,7 @@ function CheckoutPage() {
 
   if (state.orderPlaced) {
     const itemsCount = orderSummary.items.reduce((sum, item) => sum + (parseInt(item.quantity) || 0), 0)
-    
+
     return (
       <div className="min-h-screen bg-[#0a0a0a]">
         <Navbar />
@@ -552,25 +617,25 @@ function CheckoutPage() {
             <h2 className="text-3xl font-bold text-white font-poppins mb-4">ORDER PLACED SUCCESSFULLY!</h2>
             <div className="text-[#00ff00] text-xl font-bold mb-4">Order #{state.orderNumber}</div>
             <p className="text-gray-400 mb-6">Thank you for your purchase!</p>
-            
+
             <div className="bg-[#1a1a1a] border border-[#00ff00]/20 rounded-xl p-6 mb-8">
               <div className="text-white font-poppins font-semibold text-lg mb-4">Order Summary</div>
-              
+
               {orderSummary.items.map((item, index) => {
                 const itemPrice = getItemPrice(item);
                 const quantity = parseInt(item.quantity) || 1;
                 const itemTotal = getItemTotal(item);
-                
+
                 return (
                   <div key={index} className="flex items-center justify-between bg-[#111111] p-3 rounded-lg mb-3">
                     <div className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg"/>
+                      <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg" />
                       <div className="text-left">
                         <div className="text-white text-sm font-poppins font-medium">{item.name}</div>
                         <div className="text-gray-400 text-xs">Size: {item.size} • Qty: {item.quantity}</div>
                         {item.customizationData && (
                           <div className="text-xs text-[#00ff00] mt-1">
-                            Customized: 
+                            Customized:
                             {item.customizationData.playerName && ` ${item.customizationData.playerName.toUpperCase()}`}
                             {item.customizationData.playerNumber && ` #${item.customizationData.playerNumber}`}
                             {item.customizationData.patch && ` +${item.customizationData.patch.name}`}
@@ -594,7 +659,7 @@ function CheckoutPage() {
                   </div>
                 );
               })}
-              
+
               <div className="space-y-2 text-left border-t border-gray-700 pt-4 mt-4">
                 <div className="flex justify-between text-gray-400">
                   <span>Items ({itemsCount})</span>
@@ -622,7 +687,7 @@ function CheckoutPage() {
                 </div>
               </div>
             </div>
-            
+
             <button
               onClick={handleContinueShopping}
               className="bg-[#00ff00] text-black font-bold px-8 py-4 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)] transition-all duration-300"
@@ -658,8 +723,7 @@ function CheckoutPage() {
 
   const paymentMethods = [
     { id: 'cod', label: 'Cash on Delivery (COD)', icon: '💵', desc: 'Pay when you receive your order', charge: 'Additional ₹10 COD charges apply' },
-    { id: 'upi', label: 'UPI Payment', icon: '📱', desc: 'Pay via Google Pay, PhonePe, etc.', charge: 'No additional charges' },
-    { id: 'card', label: 'Credit/Debit Card', icon: '💳', desc: 'Secure card payment', charge: 'No additional charges' }
+    { id: 'razorpay', label: 'Card/UPI/NetBanking', icon: '💳', desc: 'Pay via Credit/Debit Card, UPI, NetBanking', charge: 'Powered by Razorpay' }
   ]
 
   const formFields = [
@@ -692,7 +756,7 @@ function CheckoutPage() {
             <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-8">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white font-poppins">SHIPPING INFORMATION</h2>
-                
+
                 {/* Toggle between saved addresses and manual entry */}
                 {savedAddresses.length > 0 && (
                   <button
@@ -711,19 +775,17 @@ function CheckoutPage() {
                   <div className="text-gray-400 text-sm mb-4">Select a saved address:</div>
                   <div className="space-y-4">
                     {savedAddresses.map((address, index) => (
-                      <div 
+                      <div
                         key={index}
                         onClick={() => handleAddressSelect(index)}
-                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                          state.selectedAddressIndex === index 
-                            ? 'border-[#00ff00] bg-[#00ff00]/10' 
-                            : 'border-gray-700 hover:border-[#00ff00]/50'
-                        }`}
+                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${state.selectedAddressIndex === index
+                          ? 'border-[#00ff00] bg-[#00ff00]/10'
+                          : 'border-gray-700 hover:border-[#00ff00]/50'
+                          }`}
                       >
                         <div className="flex items-start gap-4">
-                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                            state.selectedAddressIndex === index ? 'border-[#00ff00]' : 'border-gray-600'
-                          }`}>
+                          <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${state.selectedAddressIndex === index ? 'border-[#00ff00]' : 'border-gray-600'
+                            }`}>
                             {state.selectedAddressIndex === index && (
                               <div className="w-3 h-3 bg-[#00ff00] rounded-full"></div>
                             )}
@@ -750,7 +812,7 @@ function CheckoutPage() {
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="mt-6 p-4 bg-[#1a1a1a] border border-[#00ff00]/30 rounded-xl">
                     <div className="text-white font-poppins font-semibold text-sm mb-2">
                       Selected Address Preview
@@ -789,7 +851,7 @@ function CheckoutPage() {
                       )}
                     </div>
                   ))}
-                  
+
                   <div className="md:col-span-2">
                     <label className="block text-gray-400 text-sm mb-2">Address *</label>
                     <textarea
@@ -804,7 +866,7 @@ function CheckoutPage() {
                       <div className="text-red-400 text-xs mt-1">{state.formErrors.address}</div>
                     )}
                   </div>
-                  
+
                   <div className="md:col-span-2">
                     <label className="block text-gray-400 text-sm mb-2">Landmark (Optional)</label>
                     <input
@@ -843,19 +905,17 @@ function CheckoutPage() {
               <h2 className="text-2xl font-bold text-white font-poppins mb-6">PAYMENT METHOD</h2>
               <div className="space-y-4">
                 {paymentMethods.map(method => (
-                  <div 
+                  <div
                     key={method.id}
-                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${
-                      state.selectedPayment === method.id 
-                        ? 'border-[#00ff00] bg-[#00ff00]/10' 
-                        : 'border-gray-700 hover:border-[#00ff00]/50'
-                    }`}
+                    className={`p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 ${state.selectedPayment === method.id
+                      ? 'border-[#00ff00] bg-[#00ff00]/10'
+                      : 'border-gray-700 hover:border-[#00ff00]/50'
+                      }`}
                     onClick={() => updateState('selectedPayment', method.id)}
                   >
                     <div className="flex items-center gap-4">
-                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        state.selectedPayment === method.id ? 'border-[#00ff00]' : 'border-gray-600'
-                      }`}>
+                      <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${state.selectedPayment === method.id ? 'border-[#00ff00]' : 'border-gray-600'
+                        }`}>
                         {state.selectedPayment === method.id && <div className="w-3 h-3 bg-[#00ff00] rounded-full"></div>}
                       </div>
                       <div className="flex-1">
@@ -890,7 +950,7 @@ function CheckoutPage() {
               {state.selectedPayment === 'card' && (
                 <div className="mt-6 space-y-4 p-4 bg-[#1a1a1a] border border-[#00ff00]/30 rounded-xl">
                   <h3 className="text-white font-poppins font-semibold mb-2">Enter Card Details</h3>
-                  
+
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">Card Number *</label>
                     <input
@@ -917,7 +977,7 @@ function CheckoutPage() {
                       />
                       {state.formErrors.expiry && <div className="text-red-400 text-xs mt-1">{state.formErrors.expiry}</div>}
                     </div>
-                    
+
                     <div>
                       <label className="block text-gray-400 text-sm mb-2">CVV *</label>
                       <div className="relative">
@@ -942,7 +1002,7 @@ function CheckoutPage() {
                   </div>
                 </div>
               )}
-              
+
               <div className="mt-6">
                 <button
                   onClick={handleContinueShopping}
@@ -970,16 +1030,16 @@ function CheckoutPage() {
                   const itemPrice = getItemPrice(item);
                   const quantity = parseInt(item.quantity) || 1;
                   const itemTotal = getItemTotal(item);
-                  
+
                   return (
                     <div key={`${item.id}-${item.size}`} className="flex items-center gap-3">
-                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"/>
+                      <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
                       <div className="flex-1">
                         <div className="text-white text-sm font-poppins font-semibold">{item.name}</div>
                         <div className="text-gray-400 text-xs">Size: {item.size} • Qty: {item.quantity}</div>
                         {item.customizationData && (
                           <div className="text-xs text-[#00ff00] mt-1">
-                            Customized: 
+                            Customized:
                             {item.customizationData.playerName && ` ${item.customizationData.playerName.toUpperCase()}`}
                             {item.customizationData.playerNumber && ` #${item.customizationData.playerNumber}`}
                             {item.customizationData.patch && ` +${item.customizationData.patch.name}`}
@@ -1033,12 +1093,27 @@ function CheckoutPage() {
                 </div>
               </div>
 
-              <button
-                onClick={handlePlaceOrder}
-                className="w-full bg-[#00ff00] text-black font-poppins font-bold py-4 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)] transition-all duration-300 mb-4"
-              >
-                PLACE ORDER
-              </button>
+              {/* Payment Button based on selected method */}
+              {state.selectedPayment === 'cod' ? (
+                <button
+                  onClick={handlePlaceOrder}
+                  className="w-full bg-[#00ff00] text-black font-poppins font-bold py-4 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)] transition-all duration-300 mb-4"
+                >
+                  PLACE ORDER (COD)
+                </button>
+              ) : state.selectedPayment === 'razorpay' ? (
+                <RazorpayPayment
+                  amount={Math.round(displayTotal)}
+                  onSuccess={handleRazorpaySuccess}
+                  onFailure={handleRazorpayFailure}
+                  userInfo={{
+                    name: state.formData.name || user?.username,
+                    email: state.formData.email || user?.email,
+                    phone: state.formData.phone,
+                    address: `${state.formData.address}, ${state.formData.city}, ${state.formData.state} - ${state.formData.pincode}`
+                  }}
+                />
+              ) : null}
 
               <div className="text-center text-gray-400 text-sm">
                 100% Secure Payment • SSL Encrypted

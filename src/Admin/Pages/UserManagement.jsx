@@ -3,23 +3,35 @@ import api from '../../Api/Axios'
 
 const UserManagement = () => {
   const [users, setUsers] = useState([])
-  const [filteredUsers, setFilteredUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedUser, setSelectedUser] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalUsers, setTotalUsers] = useState(0)
+  const itemsPerPage = 10
 
   useEffect(() => {
-    fetchUsers()
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Debounce search
   useEffect(() => {
-    filterUsers()
-  }, [users, searchTerm])
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // Call fetchUsers whenever debouncedSearch changes
+  useEffect(() => {
+    fetchUsers()
+  }, [debouncedSearch, currentPage])
 
   const checkMobile = () => {
     setIsMobile(window.innerWidth < 860)
@@ -27,28 +39,22 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await api.get('/users')
-      setUsers(response.data || [])
+      setLoading(true)
+      let url = `/admin/users?page=${currentPage}&limit=${itemsPerPage}`
+      
+      if (debouncedSearch.trim()) {
+        url += `&search=${encodeURIComponent(debouncedSearch)}`
+      }
+      
+      const response = await api.get(url)
+      setUsers(response.data.users || [])
+      setTotalPages(response.data.pagination?.totalPages || 1)
+      setTotalUsers(response.data.pagination?.totalUsers || 0)
     } catch (error) {
       console.error('Error fetching users:', error)
     } finally {
       setLoading(false)
     }
-  }
-
-  const filterUsers = () => {
-    if (!searchTerm.trim()) {
-      setFilteredUsers(users)
-      return
-    }
-    
-    const filtered = users.filter(user =>
-      user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    
-    setFilteredUsers(filtered)
   }
 
   const handleDeleteUser = async (userId) => {
@@ -57,8 +63,8 @@ const UserManagement = () => {
     }
 
     try {
-      await api.delete(`/users/${userId}`)
-      setUsers(users.filter(user => user.id !== userId))
+      await api.delete(`/admin/users/${userId}`)
+      fetchUsers()
       alert('User deleted successfully')
     } catch (error) {
       console.error('Error deleting user:', error)
@@ -74,37 +80,17 @@ const UserManagement = () => {
     }
 
     try {
-      // Find the user
-      const user = users.find(u => u.id === userId)
-      if (!user) {
-        alert('User not found')
-        return
-      }
-
-      // Update user block status
-      const updatedUser = {
-        ...user,
-        isBlocked: !isCurrentlyBlocked,
-        blockedAt: !isCurrentlyBlocked ? new Date().toISOString() : null,
-        blockedBy: !isCurrentlyBlocked ? 'admin' : null
-      }
-
-      // Update in database
-      await api.patch(`/users/${userId}`, {
-        isBlocked: !isCurrentlyBlocked,
-        blockedAt: !isCurrentlyBlocked ? new Date().toISOString() : null,
-        blockedBy: !isCurrentlyBlocked ? 'admin' : null
+      const response = await api.patch(`/admin/users/${userId}/block`, {
+        isBlocked: !isCurrentlyBlocked
       })
 
-      // Update local state
-      setUsers(users.map(u => 
-        u.id === userId ? updatedUser : u
-      ))
-
-      alert(`User ${action}ed successfully`)
+      if (response.data.success) {
+        fetchUsers()
+        alert(`User ${action}ed successfully`)
+      }
     } catch (error) {
       console.error(`Error ${action}ing user:`, error)
-      alert(`Failed to ${action} user`)
+      alert(error.response?.data?.message || `Failed to ${action} user`)
     }
   }
 
@@ -115,7 +101,6 @@ const UserManagement = () => {
 
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A'
-    
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
@@ -125,7 +110,6 @@ const UserManagement = () => {
 
   const formatDateTime = (dateString) => {
     if (!dateString) return 'N/A'
-    
     return new Date(dateString).toLocaleString('en-IN', {
       day: 'numeric',
       month: 'short',
@@ -136,10 +120,8 @@ const UserManagement = () => {
   }
 
   const calculateTotalSpent = (user) => {
-    return (user.orders || []).reduce((total, order) => 
-      total + (parseFloat(order.total) || 0), 0
-    )
-  }
+  return user.totalSpent || 0
+}
 
   if (loading) {
     return (
@@ -177,7 +159,7 @@ const UserManagement = () => {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Total Users</p>
-          <p className="text-2xl font-bold text-white">{users.length}</p>
+          <p className="text-2xl font-bold text-white">{totalUsers}</p>
         </div>
         <div className="bg-[#111111] border border-blue-500/20 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Active Today</p>
@@ -225,9 +207,9 @@ const UserManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
-                    <tr key={user.id} className="border-t border-gray-800 hover:bg-[#1a1a1a]/50">
+                {users.length > 0 ? (
+                  users.map((user) => (
+                    <tr key={user._id} className="border-t border-gray-800 hover:bg-[#1a1a1a]/50">
                       <td className="p-4">
                         <div className="flex items-center space-x-3">
                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -244,11 +226,11 @@ const UserManagement = () => {
                             <p className="text-gray-400 text-sm truncate max-w-[120px]">{user.fullName || 'No name'}</p>
                           </div>
                         </div>
-                      </td>
+                       </td>
                       <td className="p-4 min-w-0">
                         <p className="text-white truncate max-w-[180px]">{user.email}</p>
                         <p className="text-gray-400 text-sm truncate max-w-[180px]">{user.phone || 'No phone'}</p>
-                      </td>
+                       </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-sm ${
                           user.isBlocked 
@@ -257,7 +239,7 @@ const UserManagement = () => {
                         }`}>
                           {user.isBlocked ? 'Blocked' : 'Active'}
                         </span>
-                      </td>
+                       </td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-sm ${
                           (user.orders?.length || 0) > 0 
@@ -266,10 +248,10 @@ const UserManagement = () => {
                         }`}>
                           {user.orders?.length || 0}
                         </span>
-                      </td>
+                       </td>
                       <td className="p-4">
                         <p className="text-[#00ff00] font-bold text-sm">₹{calculateTotalSpent(user).toFixed(2)}</p>
-                      </td>
+                       </td>
                       <td className="p-4">
                         <div className="flex items-center space-x-2">
                           <button
@@ -283,7 +265,7 @@ const UserManagement = () => {
                             </svg>
                           </button>
                           <button
-                            onClick={() => handleBlockUser(user.id, user.isBlocked)}
+                            onClick={() => handleBlockUser(user._id, user.isBlocked)}
                             className={`p-2 rounded-lg hover:opacity-90 transition-colors ${
                               user.isBlocked
                                 ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -302,7 +284,7 @@ const UserManagement = () => {
                             )}
                           </button>
                           <button
-                            onClick={() => handleDeleteUser(user.id)}
+                            onClick={() => handleDeleteUser(user._id)}
                             className="p-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-colors"
                             title="Delete User"
                           >
@@ -311,7 +293,7 @@ const UserManagement = () => {
                             </svg>
                           </button>
                         </div>
-                      </td>
+                       </td>
                     </tr>
                   ))
                 ) : (
@@ -328,10 +310,9 @@ const UserManagement = () => {
       ) : (
         /* Mobile Card View */
         <div className="space-y-4">
-          {filteredUsers.length > 0 ? (
-            filteredUsers.map((user) => (
-              <div key={user.id} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-4">
-                {/* User Header */}
+          {users.length > 0 ? (
+            users.map((user) => (
+              <div key={user._id} className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-4">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
                     <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
@@ -357,7 +338,6 @@ const UserManagement = () => {
                   </span>
                 </div>
 
-                {/* User Details */}
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between items-center">
                     <p className="text-gray-400 text-sm">Email</p>
@@ -383,7 +363,6 @@ const UserManagement = () => {
                   </div>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-2 pt-4 border-t border-gray-800">
                   <button
                     onClick={() => handleViewDetails(user)}
@@ -396,7 +375,7 @@ const UserManagement = () => {
                     View
                   </button>
                   <button
-                    onClick={() => handleBlockUser(user.id, user.isBlocked)}
+                    onClick={() => handleBlockUser(user._id, user.isBlocked)}
                     className={`flex-1 py-2 rounded-lg text-sm hover:opacity-90 transition-colors flex items-center justify-center gap-1 ${
                       user.isBlocked
                         ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -413,7 +392,7 @@ const UserManagement = () => {
                     {user.isBlocked ? 'Unblock' : 'Block'}
                   </button>
                   <button
-                    onClick={() => handleDeleteUser(user.id)}
+                    onClick={() => handleDeleteUser(user._id)}
                     className="flex-1 bg-red-500/20 text-red-400 py-2 rounded-lg hover:bg-red-500/30 transition-colors text-sm flex items-center justify-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -441,7 +420,7 @@ const UserManagement = () => {
                 <h3 className="text-xl font-bold text-white">User Details</h3>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => handleBlockUser(selectedUser.id, selectedUser.isBlocked)}
+                    onClick={() => handleBlockUser(selectedUser._id, selectedUser.isBlocked)}
                     className={`px-3 py-1 rounded-lg text-sm hover:opacity-90 transition-colors flex items-center gap-1 ${
                       selectedUser.isBlocked
                         ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
@@ -458,7 +437,7 @@ const UserManagement = () => {
                     {selectedUser.isBlocked ? 'Unblock' : 'Block'}
                   </button>
                   <button
-                    onClick={() => handleDeleteUser(selectedUser.id)}
+                    onClick={() => handleDeleteUser(selectedUser._id)}
                     className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition-colors flex items-center gap-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -478,7 +457,6 @@ const UserManagement = () => {
               </div>
 
               <div className="space-y-6">
-                {/* User Info */}
                 <div className="flex items-center space-x-4">
                   <div className={`w-20 h-20 rounded-full flex items-center justify-center ${
                     selectedUser.isBlocked 
@@ -508,7 +486,6 @@ const UserManagement = () => {
                   </div>
                 </div>
 
-                {/* Personal Details */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-[#1a1a1a] rounded-lg p-4">
                     <p className="text-gray-400 text-sm">Full Name</p>
@@ -532,7 +509,6 @@ const UserManagement = () => {
                   </div>
                 </div>
 
-                {/* Addresses */}
                 <div>
                   <h5 className="text-lg font-bold text-white mb-3">Saved Addresses</h5>
                   <div className="space-y-3">
@@ -558,7 +534,6 @@ const UserManagement = () => {
                   </div>
                 </div>
 
-                {/* Recent Orders */}
                 <div>
                   <h5 className="text-lg font-bold text-white mb-3">Recent Orders</h5>
                   <div className="space-y-3">

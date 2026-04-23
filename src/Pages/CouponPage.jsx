@@ -10,7 +10,7 @@ function CouponPage() {
   const [couponError, setCouponError] = useState('')
 
   const validCoupons = {
-    DRIBBLEFIT20: {
+    DRIBBLEFIT10: {
       discount: 20,
       type: 'percentage',
       message: '20% off your entire order!',

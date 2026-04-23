@@ -23,26 +23,25 @@ function LoginPage() {
 
   const handleSubmit = async (values) => {
     setMessage('')
-    
+
     const result = await login(values.email, values.password)
-    
+
     if (result.success) {
       setMessage('✅ Login successful!')
-      
-      // Sync cart after successful login
-      try {
-        await syncCartOnLogin(result.user.id)
-      } catch (error) {
-        console.error('Error syncing cart:', error)
-        // Continue even if cart sync fails
+
+      if (result.user) {
+        try {
+          await syncCartOnLogin(result.user.id)
+        } catch (error) {
+          console.error('Error syncing cart:', error)
+        }
       }
-      
-      // REDIRECT BASED ON USER ROLE
+
       setTimeout(() => {
         if (result.isAdmin) {
-          navigate('/admin') // Redirect admin to admin dashboard
+          navigate('/admin')
         } else {
-          navigate('/home') // Redirect regular users to home
+          navigate('/home')
         }
       }, 1000)
     } else {
@@ -54,9 +53,9 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4 relative overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
-        <img 
-          src="src/assets/download (1).jpeg" 
-          alt="Background" 
+        <img
+          src="src/assets/download (1).jpeg"
+          alt="Background"
           className="w-full h-full object-cover"
           loading="lazy"
         />
@@ -67,22 +66,21 @@ function LoginPage() {
       </div>
 
       <div className="w-full max-w-sm z-10 relative">
-        
+
         <div className="text-center mb-6">
-          <img 
-            src="src/assets/Logo (1).PNG" 
-            alt="DRIBBLEFIT" 
+          <img
+            src="src/assets/Logo (1).PNG"
+            alt="DRIBBLEFIT"
             className="mx-auto"
           />
           <p className="text-gray-300 text-sm font-light mt-2">WELCOME BACK</p>
         </div>
 
         {message && (
-          <div className={`mb-4 p-3 rounded-lg text-sm text-center backdrop-blur-sm ${
-            message.includes('❌') 
-              ? 'bg-red-500/30 text-red-300 border border-red-500/50' 
+          <div className={`mb-4 p-3 rounded-lg text-sm text-center backdrop-blur-sm ${message.includes('❌')
+              ? 'bg-red-500/30 text-red-300 border border-red-500/50'
               : 'bg-[#00ff00]/30 text-[#caffca] border border-[#00ff00]/50'
-          }`}>
+            }`}>
             {message}
           </div>
         )}
@@ -95,9 +93,9 @@ function LoginPage() {
           >
             <Form className="space-y-4">
               <div>
-                <Field 
-                  type="email" 
-                  name="email" 
+                <Field
+                  type="email"
+                  name="email"
                   placeholder="Email"
                   className="w-full bg-white/10 border border-white/20 text-white px-3 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00] text-sm placeholder-gray-400 transition-all"
                 />
@@ -105,17 +103,17 @@ function LoginPage() {
               </div>
 
               <div>
-                <Field 
-                  type="password" 
-                  name="password" 
+                <Field
+                  type="password"
+                  name="password"
                   placeholder="Password"
                   className="w-full bg-white/10 border border-white/20 text-white px-3 py-3 rounded-lg focus:outline-none focus:border-[#00ff00] focus:ring-1 focus:ring-[#00ff00] text-sm placeholder-gray-400 transition-all"
                 />
                 <ErrorMessage name="password" component="div" className="text-red-300 text-xs mt-1" />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className="w-full bg-[#00ff00] text-black font-bold py-3 rounded-lg hover:bg-[#00ff00]/90 hover:shadow-lg hover:shadow-[#00ff00]/30 transition-all duration-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
               >

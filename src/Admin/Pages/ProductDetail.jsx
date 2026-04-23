@@ -14,24 +14,32 @@ const ProductDetail = () => {
   }, [id])
 
   const getImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://via.placeholder.com/150?text=No+Image'
+    if (!imagePath) return 'https://via.placeholder.com/300x400?text=No+Image'
     
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath
     }
     
-    if (imagePath.startsWith('/') || imagePath.startsWith('./')) {
-      return `http://localhost:5173${imagePath.startsWith('/') ? imagePath : imagePath.substring(1)}`
-    }
-    
-    return imagePath
+    // Clean the path
+    let cleanPath = imagePath.replace(/^\.\/+/, '').replace(/^\/+/, '')
+    return `http://localhost:5173/${cleanPath}`
   }
 
+  // ✅ FIXED: Handle response properly
   const fetchProduct = async () => {
     try {
       setLoading(true)
-      const response = await api.get(`/products/${id}`)
-      const productData = response.data || response
+      const response = await api.get(`/admin/products/${id}`)
+      
+      // The response might be the product directly or wrapped in .data
+      let productData = response.data
+      
+      // If response has a product property, use that
+      if (response.data.product) {
+        productData = response.data.product
+      }
+      
+      console.log('Product data received:', productData) // Debug log
       setProduct(productData)
     } catch (error) {
       console.error('Error fetching product:', error)
@@ -44,7 +52,7 @@ const ProductDetail = () => {
 
   const handleDelete = async () => {
     try {
-      await api.delete(`/products/${id}`)
+      await api.delete(`/admin/products/${id}`)
       showNotification('Product deleted successfully!', 'success')
       setTimeout(() => {
         navigate('/admin/products')
@@ -115,7 +123,7 @@ const ProductDetail = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">{product.name}</h1>
+          <h1 className="text-2xl font-bold text-white">{product.name || 'Product Details'}</h1>
           <p className="text-gray-400">Product Details</p>
           <div className="mt-1 text-sm text-gray-500">
             ID: <span className="font-mono text-white">{id}</span>
@@ -155,18 +163,17 @@ const ProductDetail = () => {
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   console.error('Image failed to load:', product.image)
-                  e.target.src = 'https://via.placeholder.com/600x800?text=Image+Not+Found'
+                  e.target.src = 'https://via.placeholder.com/600x800?text=No+Image'
                 }}
               />
-              {/* Badges */}
               <div className="absolute top-4 right-4 flex flex-col gap-2">
                 {product.featured && (
-                  <span className="bg-yellow-500 text-black text-sm font-bold px-3 py-1 rounded-full inline-block">
+                  <span className="bg-yellow-500 text-black text-sm font-bold px-3 py-1 rounded-full">
                     FEATURED
                   </span>
                 )}
                 {!product.inStock && (
-                  <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full inline-block">
+                  <span className="bg-red-500 text-white text-sm font-bold px-3 py-1 rounded-full">
                     OUT OF STOCK
                   </span>
                 )}
@@ -238,7 +245,7 @@ const ProductDetail = () => {
               </div>
 
               <div>
-                <label className="text-gray-400 text-sm">Created/Updated</label>
+                <label className="text-gray-400 text-sm">Created</label>
                 <p className="text-white font-medium">
                   {product.createdAt ? new Date(product.createdAt).toLocaleDateString() : 'N/A'}
                 </p>

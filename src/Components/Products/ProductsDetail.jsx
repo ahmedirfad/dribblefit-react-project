@@ -26,13 +26,22 @@ function ProductsDetail() {
   const [selectedPatch, setSelectedPatch] = useState(null)
   const [customizationTotal, setCustomizationTotal] = useState(0)
 
+  // Get image URL
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return ''
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+      return imagePath
+    }
+    let cleanPath = imagePath.replace(/^\.\/+/, '').replace(/^\/+/, '')
+    return `http://localhost:5173/${cleanPath}`
+  }
+
   // Available patches based on product category/league
   const getAvailablePatches = () => {
     if (!product) return []
 
     const basePatches = []
 
-    // Check for international kits
     if (product.category === 'international-kits') {
       basePatches.push({
         id: 'worldcup',
@@ -42,7 +51,6 @@ function ProductsDetail() {
       })
     }
 
-    // League-specific badges
     if (product.league) {
       const league = product.league.toLowerCase()
 
@@ -91,7 +99,6 @@ function ProductsDetail() {
       }
     }
 
-    // Champions League badge for all except international kits
     if (product.category !== 'international-kits') {
       basePatches.push({
         id: 'champions-league',
@@ -104,23 +111,56 @@ function ProductsDetail() {
     return basePatches
   }
 
+  // ✅ FIXED: Single fetch function - gets product by ID directly
+  const fetchProduct = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get(`/products/${id}`)
+      const productData = response.data
+
+      if (productData) {
+        setProduct(productData)
+        if (productData.sizes && productData.sizes.length > 0) {
+          setSelectedSize(productData.sizes[0])
+        }
+        
+        // Fetch related products (same category, different ID)
+        fetchRelatedProducts(productData.category)
+      } else {
+        setProduct(null)
+      }
+    } catch (error) {
+      console.error('Error fetching product:', error)
+      setProduct(null)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Fetch related products
+  const fetchRelatedProducts = async (category) => {
+    try {
+      const response = await api.get(`/products?category=${category}&limit=4`)
+      const products = response.data.products || response.data || []
+      // Filter out current product
+      const filtered = products.filter(p => p.id.toString() !== id).slice(0, 4)
+      setRelatedProducts(filtered)
+    } catch (error) {
+      console.error('Error fetching related products:', error)
+      setRelatedProducts([])
+    }
+  }
+
   useEffect(() => {
     fetchProduct()
   }, [id])
 
-  useEffect(() => {
-    if (product) {
-      fetchRelatedProducts()
-    }
-  }, [product])
-
   // Calculate customization total
   useEffect(() => {
     let total = 0
-    if (playerName.trim()) total += 299 // Name customization fee
-    if (playerNumber.trim()) total += 299 // Number customization fee
+    if (playerName.trim()) total += 299
+    if (playerNumber.trim()) total += 299
 
-    // Add selected patch cost
     if (selectedPatch) {
       const patch = getAvailablePatches().find(p => p.id === selectedPatch)
       if (patch) total += patch.price
@@ -129,44 +169,11 @@ function ProductsDetail() {
     setCustomizationTotal(total)
   }, [playerName, playerNumber, selectedPatch, product])
 
-  const fetchProduct = async () => {
-    try {
-      const response = await api.get('/products')
-      const foundProduct = response.data.find(p => p.id.toString() === id)
-
-      if (foundProduct) {
-        setProduct(foundProduct)
-        if (foundProduct.sizes && foundProduct.sizes.length > 0) {
-          setSelectedSize(foundProduct.sizes[0])
-        }
-      } else {
-        setProduct(null)
-      }
-      setLoading(false)
-    } catch (error) {
-      console.error('Error fetching products:', error)
-      setLoading(false)
-      setProduct(null)
-    }
-  }
-
-  const fetchRelatedProducts = async () => {
-    try {
-      const response = await api.get('/products')
-      const related = response.data
-        .filter(p => p.id.toString() !== id && p.category === product.category)
-        .slice(0, 4)
-      setRelatedProducts(related)
-    } catch (error) {
-      console.error('Error fetching related products:', error)
-    }
-  }
-
   const showToast = (message, type = 'success') => {
     const notification = document.createElement('div')
     notification.className = `fixed top-4 right-4 font-poppins font-bold px-6 py-3 rounded-lg shadow-lg z-50 animate-bounce ${type === 'success' ? 'bg-[#00ff00] text-black' :
-        type === 'error' ? 'bg-red-500 text-white' :
-          'bg-yellow-500 text-black'
+      type === 'error' ? 'bg-red-500 text-white' :
+        'bg-yellow-500 text-black'
       }`
     notification.textContent = message
     document.body.appendChild(notification)
@@ -296,7 +303,6 @@ function ProductsDetail() {
     return getAvailablePatches().find(p => p.id === selectedPatch)
   }
 
-  // Fallback colors for when images fail to load
   const getFallbackColor = (patchId) => {
     const fallbackColors = {
       'worldcup': 'bg-gradient-to-br from-blue-600 to-green-600',
@@ -373,9 +379,12 @@ function ProductsDetail() {
           <div className="space-y-6">
             <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-6 relative">
               <img
-                src={`http://localhost:5173/${product?.image}`}
-                alt={product?.name}
+                src={getImageUrl(product.image)}
+                alt={product.name}
                 className="w-full h-auto max-h-[500px] object-contain rounded-xl"
+                onError={(e) => {
+                  e.target.src = 'https://via.placeholder.com/500x500?text=No+Image'
+                }}
               />
 
               <div className="absolute top-4 right-4 z-20">
@@ -387,8 +396,8 @@ function ProductsDetail() {
             <button
               onClick={handleCustomize}
               className={`w-full font-poppins font-bold py-4 rounded-xl transition-all duration-300 text-lg ${customizeMode
-                  ? 'bg-[#00ff00] text-black hover:bg-[#00ff00]/90'
-                  : 'bg-gradient-to-r from-[#00ff00]/20 to-emerald-600/20 border border-[#00ff00]/30 text-white hover:bg-[#00ff00]/30'
+                ? 'bg-[#00ff00] text-black hover:bg-[#00ff00]/90'
+                : 'bg-gradient-to-r from-[#00ff00]/20 to-emerald-600/20 border border-[#00ff00]/30 text-white hover:bg-[#00ff00]/30'
                 }`}
             >
               {customizeMode ? '✓ CUSTOMIZATION ACTIVE' : '🎨 CUSTOMIZE THIS JERSEY'}
@@ -429,16 +438,7 @@ function ProductsDetail() {
                               alt={getSelectedPatchDetails().name}
                               className="w-full h-full object-contain p-2"
                               onError={(e) => {
-                                console.error(`Failed to load image: ${getSelectedPatchDetails().image}`)
-                                const colorClass = getFallbackColor(selectedPatch)
-                                const shortName = getPatchShortName(getSelectedPatchDetails().name)
-                                e.target.parentElement.innerHTML = `
-                                  <div class="w-full h-full rounded-lg ${colorClass} flex items-center justify-center">
-                                    <div class="text-white text-sm font-bold text-center px-2">
-                                      ${shortName}
-                                    </div>
-                                  </div>
-                                `
+                                e.target.style.display = 'none'
                               }}
                             />
                           ) : (
@@ -511,7 +511,6 @@ function ProductsDetail() {
                   </button>
                 </div>
 
-                {/* Player Name & Number - WITH ICONS AND SAME SIZE */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">
@@ -569,7 +568,6 @@ function ProductsDetail() {
                   </div>
                 </div>
 
-                {/* Patch Selection - Only if available */}
                 {availablePatches.length > 0 && (
                   <div>
                     <label className="block text-gray-400 text-sm mb-2">
@@ -581,8 +579,8 @@ function ProductsDetail() {
                           key={patch.id}
                           onClick={() => handlePatchSelect(patch.id)}
                           className={`flex items-center gap-3 p-3 rounded-lg border transition-all duration-300 ${selectedPatch === patch.id
-                              ? 'border-[#00ff00] bg-[#00ff00]/10'
-                              : 'border-[#00ff00]/30 hover:border-[#00ff00] hover:bg-[#00ff00]/5'
+                            ? 'border-[#00ff00] bg-[#00ff00]/10'
+                            : 'border-[#00ff00]/30 hover:border-[#00ff00] hover:bg-[#00ff00]/5'
                             }`}
                         >
                           <div className="w-14 h-14 bg-gray-900 border border-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
@@ -592,16 +590,7 @@ function ProductsDetail() {
                                 alt={patch.name}
                                 className="w-full h-full object-contain p-1"
                                 onError={(e) => {
-                                  console.error(`Failed to load image: ${patch.image}`)
-                                  const colorClass = getFallbackColor(patch.id)
-                                  const shortName = getPatchShortName(patch.name)
-                                  e.target.parentElement.innerHTML = `
-                                    <div class="w-full h-full rounded-lg ${colorClass} flex items-center justify-center">
-                                      <div class="text-white text-xs font-bold text-center px-1">
-                                        ${shortName}
-                                      </div>
-                                    </div>
-                                  `
+                                  e.target.style.display = 'none'
                                 }}
                               />
                             ) : (
@@ -632,7 +621,6 @@ function ProductsDetail() {
                   </div>
                 )}
 
-                {/* Customization Summary */}
                 <div className="bg-[#1a1a1a] border border-[#00ff00]/20 rounded-lg p-4">
                   <div className="space-y-2 mb-3">
                     {playerName.trim() && (
@@ -688,8 +676,8 @@ function ProductsDetail() {
                     key={size}
                     onClick={() => setSelectedSize(size)}
                     className={`py-3 rounded-lg border-2 font-poppins font-bold transition-all duration-300 ${selectedSize === size
-                        ? 'border-[#00ff00] bg-[#00ff00] text-black shadow-lg shadow-[#00ff00]/30'
-                        : 'border-[#00ff00]/30 text-white hover:border-[#00ff00] hover:bg-[#00ff00]/10'
+                      ? 'border-[#00ff00] bg-[#00ff00] text-black shadow-lg shadow-[#00ff00]/30'
+                      : 'border-[#00ff00]/30 text-white hover:border-[#00ff00] hover:bg-[#00ff00]/10'
                       }`}
                   >
                     {size}
@@ -726,8 +714,8 @@ function ProductsDetail() {
                     onClick={handleAddToCart}
                     disabled={!product.inStock || !selectedSize}
                     className={`flex-1 font-poppins font-bold py-4 rounded-lg transition-all duration-300 text-sm ${product.inStock && selectedSize
-                        ? 'bg-[#00ff00] text-black hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)]'
-                        : 'bg-gray-600 text-gray-300 cursor-not-allowed'
+                      ? 'bg-[#00ff00] text-black hover:bg-[#00ff00]/90 hover:shadow-[0_0_20px_rgba(0,255,0,0.4)]'
+                      : 'bg-gray-600 text-gray-300 cursor-not-allowed'
                       }`}
                   >
                     {customizeMode ? 'ADD CUSTOMIZED TO CART' : 'ADD TO CART'}
@@ -736,8 +724,8 @@ function ProductsDetail() {
                     onClick={handleBuyNow}
                     disabled={!product.inStock || !selectedSize}
                     className={`flex-1 font-poppins font-bold py-4 rounded-lg transition-all duration-300 text-sm ${product.inStock && selectedSize
-                        ? 'bg-transparent border-2 border-[#00ff00] text-[#00ff00] hover:bg-[#00ff00] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,0,0.4)]'
-                        : 'bg-gray-600 text-gray-300 cursor-not-allowed border-gray-600'
+                      ? 'bg-transparent border-2 border-[#00ff00] text-[#00ff00] hover:bg-[#00ff00] hover:text-black hover:shadow-[0_0_20px_rgba(0,255,0,0.4)]'
+                      : 'bg-gray-600 text-gray-300 cursor-not-allowed border-gray-600'
                       }`}
                   >
                     BUY NOW
@@ -777,9 +765,12 @@ function ProductsDetail() {
                 >
                   <div className="relative h-48 mb-4 overflow-hidden rounded-xl bg-[#1a1a1a]">
                     <img
-                      src={relatedProduct.image}
+                      src={getImageUrl(relatedProduct.image)}
                       alt={relatedProduct.name}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={(e) => {
+                        e.target.src = 'https://via.placeholder.com/300x400?text=No+Image'
+                      }}
                     />
 
                     <div className="absolute top-2 right-2 z-10">

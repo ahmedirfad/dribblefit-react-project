@@ -5,79 +5,53 @@ import { useNavigate, Link } from 'react-router-dom'
 const ProductManagement = () => {
   const navigate = useNavigate()
   const [products, setProducts] = useState([])
-  const [filteredProducts, setFilteredProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(9)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalProducts, setTotalProducts] = useState(0)
 
+  // Fetch products when page, category, or search changes
   useEffect(() => {
     fetchProducts()
-  }, [])
+  }, [currentPage, selectedCategory, searchTerm])
 
-  useEffect(() => {
-    filterProducts()
-    setCurrentPage(1)
-  }, [products, searchTerm, selectedCategory])
-
-  // ✅ UPDATED IMAGE FUNCTION - More robust
   const getImageUrl = (imagePath) => {
     if (!imagePath || imagePath.trim() === '') {
       return 'https://via.placeholder.com/300x400?text=No+Image'
     }
 
-    // Already absolute URL - return as is
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
       return imagePath
     }
 
-    // Handle relative paths
-    let cleanPath = imagePath
-    
-    // Remove "./" if present
-    if (cleanPath.startsWith('./')) {
-      cleanPath = cleanPath.substring(2)
-    }
-    
-    // Remove leading "/" if present (we'll add it properly)
-    if (cleanPath.startsWith('/')) {
-      cleanPath = cleanPath.substring(1)
-    }
-
-    // Get base URL from axios config
-    const baseURL = api.defaults.baseURL || ''
-    
-    // Ensure proper URL construction
-    if (baseURL && !baseURL.endsWith('/')) {
-      return `${baseURL}/${cleanPath}`
-    }
-    
-    return `${baseURL}${cleanPath}`
+    // Serve images from frontend
+    let cleanPath = imagePath.replace(/^\.\/+/, '').replace(/^\/+/, '')
+    return `http://localhost:5173/${cleanPath}`
   }
 
   const fetchProducts = async () => {
     try {
-      const response = await api.get('/products')
-      const productsData = response.data || response || []
+      setLoading(true)
+      let url = `/admin/products?page=${currentPage}&limit=${itemsPerPage}`
       
-      let productsArray = []
-      if (Array.isArray(productsData)) {
-        productsArray = productsData
-      } else if (productsData.products) {
-        productsArray = productsData.products
-      } else if (productsData.data) {
-        productsArray = productsData.data
-      } else {
-        productsArray = []
+      if (selectedCategory !== 'all') {
+        url += `&category=${selectedCategory}`
       }
       
-      console.log('Fetched products:', productsArray)
-      console.log('Sample image path:', productsArray[0]?.image)
-      console.log('Generated image URL:', getImageUrl(productsArray[0]?.image))
+      if (searchTerm.trim()) {
+        url += `&search=${encodeURIComponent(searchTerm)}`
+      }
       
-      setProducts(productsArray)
+      const response = await api.get(url)
+      const productsData = response.data.products || []
+      
+      setProducts(productsData)
+      setTotalPages(response.data.pagination?.totalPages || 1)
+      setTotalProducts(response.data.pagination?.totalProducts || 0)
     } catch (error) {
       console.error('Error fetching products:', error)
       showNotification('Failed to load products', 'error')
@@ -87,61 +61,13 @@ const ProductManagement = () => {
     }
   }
 
-  const filterProducts = () => {
-    let filtered = [...products]
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category === selectedCategory)
-    }
-
-    if (searchTerm.trim()) {
-      filtered = filtered.filter(product =>
-        (product.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-        (product.team?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-      )
-    }
-
-    setFilteredProducts(filtered)
-  }
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber)
-  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
-  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
-
-  const getPageNumbers = () => {
-    const pageNumbers = []
-    const maxVisiblePages = 5
-    
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i)
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pageNumbers.push(i)
-        pageNumbers.push('...')
-        pageNumbers.push(totalPages)
-      } else if (currentPage >= totalPages - 2) {
-        pageNumbers.push(1)
-        pageNumbers.push('...')
-        for (let i = totalPages - 3; i <= totalPages; i++) pageNumbers.push(i)
-      } else {
-        pageNumbers.push(1)
-        pageNumbers.push('...')
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pageNumbers.push(i)
-        pageNumbers.push('...')
-        pageNumbers.push(totalPages)
-      }
-    }
-    
-    return pageNumbers
-  }
-
   const handleDeleteProduct = async (productId) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return
 
     try {
-      await api.delete(`/products/${productId}`)
-      setProducts(products.filter(product => product.id !== productId))
+      await api.delete(`/admin/products/${productId}`)
       showNotification('Product deleted successfully!', 'success')
+      fetchProducts()
     } catch (error) {
       console.error('Error deleting product:', error)
       showNotification('Failed to delete product', 'error')
@@ -185,10 +111,52 @@ const ProductManagement = () => {
     return names[category] || category
   }
 
-  const indexOfLastItem = currentPage * itemsPerPage
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentProducts = filteredProducts.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage)
+  const paginate = (pageNumber) => setCurrentPage(pageNumber)
+  const nextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1)
+  const prevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1)
+
+  const getPageNumbers = () => {
+    const pageNumbers = []
+    const maxVisiblePages = 5
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i)
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pageNumbers.push(i)
+        pageNumbers.push('...')
+        pageNumbers.push(totalPages)
+      } else if (currentPage >= totalPages - 2) {
+        pageNumbers.push(1)
+        pageNumbers.push('...')
+        for (let i = totalPages - 3; i <= totalPages; i++) pageNumbers.push(i)
+      } else {
+        pageNumbers.push(1)
+        pageNumbers.push('...')
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pageNumbers.push(i)
+        pageNumbers.push('...')
+        pageNumbers.push(totalPages)
+      }
+    }
+    
+    return pageNumbers
+  }
+
+  const handleSearch = (e) => {
+    setSearchTerm(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value)
+    setCurrentPage(1)
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setSelectedCategory('all')
+    setCurrentPage(1)
+  }
 
   if (loading) {
     return (
@@ -200,7 +168,7 @@ const ProductManagement = () => {
   
   return (
     <div className="space-y-6 p-4">
-      {/* Header and Search */}
+      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-white">Product Management</h1>
@@ -212,7 +180,7 @@ const ProductManagement = () => {
               type="text"
               placeholder="Search products..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearch}
               className="bg-[#1a1a1a] border border-gray-700 text-white px-4 pl-10 py-2 rounded-lg focus:outline-none focus:border-[#00ff00] w-full md:w-64 text-sm"
             />
             <svg className="w-4 h-4 text-gray-500 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -235,7 +203,7 @@ const ProductManagement = () => {
       <div className="flex flex-wrap gap-4">
         <select
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={handleCategoryChange}
           className="bg-[#1a1a1a] border border-gray-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:border-[#00ff00] text-sm"
         >
           {categories.map(category => (
@@ -246,11 +214,7 @@ const ProductManagement = () => {
         </select>
 
         <button
-          onClick={() => {
-            setSearchTerm('')
-            setSelectedCategory('all')
-            setCurrentPage(1)
-          }}
+          onClick={clearFilters}
           className="px-4 py-2 border border-gray-700 text-gray-400 rounded-lg hover:border-[#00ff00] hover:text-[#00ff00] transition-colors text-sm"
         >
           Clear Filters
@@ -258,10 +222,10 @@ const ProductManagement = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-[#111111] border border-[#00ff00]/20 rounded-xl p-4">
           <p className="text-gray-400 text-sm">Total Products</p>
-          <p className="text-2xl font-bold text-white">{products.length}</p>
+          <p className="text-2xl font-bold text-white">{totalProducts}</p>
         </div>
         <div className="bg-[#111111] border border-green-500/20 rounded-xl p-4">
           <p className="text-gray-400 text-sm">In Stock</p>
@@ -275,23 +239,16 @@ const ProductManagement = () => {
             {products.filter(p => !p.inStock).length}
           </p>
         </div>
-        <div className="bg-[#111111] border border-yellow-500/20 rounded-xl p-4">
-          <p className="text-gray-400 text-sm">Featured</p>
-          <p className="text-2xl font-bold text-white">
-            {products.filter(p => p.featured).length}
-          </p>
-        </div>
       </div>
 
       {/* Products Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {currentProducts.length > 0 ? (
-          currentProducts.map((product) => (
+        {products.length > 0 ? (
+          products.map((product) => (
             <div
               key={product.id}
               className="bg-[#111111] border border-[#00ff00]/20 rounded-xl overflow-hidden hover:border-[#00ff00]/40 transition-colors group"
             >
-              {/* Product Image - UPDATED: Removed hover overlay */}
               <div 
                 className="relative h-48 bg-[#1a1a1a] overflow-hidden cursor-pointer"
                 onClick={() => handleViewProduct(product)}
@@ -301,11 +258,9 @@ const ProductManagement = () => {
                   alt={product.name}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {
-                    console.error('Image failed to load:', product.image, 'Generated URL:', getImageUrl(product.image))
                     e.target.src = 'https://via.placeholder.com/300x400?text=Image+Not+Found'
                     e.target.className = 'w-full h-full object-contain bg-[#1a1a1a] p-4'
                   }}
-                  onLoad={() => console.log('Image loaded successfully:', getImageUrl(product.image))}
                 />
                 <div className="absolute top-3 right-3 flex gap-2">
                   {product.featured && (
@@ -321,10 +276,9 @@ const ProductManagement = () => {
                 </div>
               </div>
 
-              {/* Product Info */}
               <div className="p-4">
                 <h3 className="text-white font-bold text-lg mb-2 line-clamp-1">
-                  {product.name || 'Unnamed Product'}
+                  {product.name}
                 </h3>
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[#00ff00] font-bold">
@@ -350,7 +304,6 @@ const ProductManagement = () => {
                   </p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => handleViewProduct(product)}
@@ -390,14 +343,14 @@ const ProductManagement = () => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             {searchTerm || selectedCategory !== 'all'
-              ? `No products found matching "${searchTerm}" in ${getCategoryDisplayName(selectedCategory)}`
+              ? `No products found matching "${searchTerm}"`
               : 'No products available. Click "Add Product" to create your first product.'}
           </div>
         )}
       </div>
 
       {/* Pagination */}
-      {filteredProducts.length > itemsPerPage && ( 
+      {totalPages > 1 && ( 
         <div className="flex items-center justify-center space-x-2 py-6">
           <button
             onClick={prevPage}

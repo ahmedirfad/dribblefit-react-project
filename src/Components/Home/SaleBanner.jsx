@@ -1,20 +1,32 @@
 import React, { useState, useEffect } from 'react'
 
 function SaleBanner() {
-  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft())
+  const [settings, setSettings] = useState({
+    is_active: true,
+    end_date: '2026-07-11T23:59:59',
+    coupon_code: 'WORLDCUP2026',
+    message: 'WORLD CUP SEASON SALE • UP TO 40% OFF • ENDS JULY 11TH, 2026'
+  })
+  const [timeLeft, setTimeLeft] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('saleBannerSettings')
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings))
+    }
+    setIsLoading(false)
+  }, [])
 
   function calculateTimeLeft() {
-    const now = new Date().getTime()
-    const currentYear = new Date().getFullYear()
+    if (!settings?.end_date) return null
     
-    // New Year sale ends on Jan 2, 00:00:00 of the next year
-    const saleEndDate = new Date(`January 2, ${currentYear + 1} 00:00:00`).getTime()
+    const now = new Date().getTime()
+    const saleEndDate = new Date(settings.end_date).getTime()
     const difference = saleEndDate - now
 
-    // If New Year sale has passed, return null
-    if (difference < 0) {
-      return null
-    }
+    if (difference < 0) return null
 
     return {
       days: Math.floor(difference / (1000 * 60 * 60 * 24)),
@@ -25,24 +37,26 @@ function SaleBanner() {
   }
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    if (!settings?.is_active || !settings?.end_date) return
+
+    const updateTimer = () => {
       const newTimeLeft = calculateTimeLeft()
-      if (newTimeLeft) {
-        setTimeLeft(newTimeLeft)
-      } else {
-        // Sale has ended - clear interval
-        clearInterval(timer)
-        setTimeLeft(null)
-      }
-    }, 1000)
+      setTimeLeft(newTimeLeft)
+    }
+
+    // Set initial time
+    updateTimer()
+
+    const timer = setInterval(updateTimer, 1000)
 
     return () => clearInterval(timer)
-  }, [])
+  }, [settings?.is_active, settings?.end_date])
 
-  // If sale has ended, don't render the banner
-  if (!timeLeft) {
-    return null
-  }
+  // Don't show while loading to prevent flash
+  if (isLoading) return null
+  
+  // Don't show if inactive or ended
+  if (!settings?.is_active || !timeLeft) return null
 
   return (
     <div className="bg-[#0a0a0a] border-b border-[#00ff00]/20 py-2">
@@ -64,10 +78,12 @@ function SaleBanner() {
 
         {/* Sale Message */}
         <div className="text-gray-300 text-center">
-          <span className="font-medium"> NEW YEAR SALE • UP TO 35% OFF • ENDS JANUARY 2ND</span>
-          <div className="text-[#00ff00] text-xs mt-1">
-            USE CODE: <span className="font-bold">NEWYEAR2026</span>
-          </div>
+          <span className="font-medium">{settings.message}</span>
+          {settings.coupon_code && (
+            <div className="text-[#00ff00] text-xs mt-1">
+              USE CODE: <span className="font-bold">{settings.coupon_code}</span>
+            </div>
+          )}
         </div>
 
       </div>

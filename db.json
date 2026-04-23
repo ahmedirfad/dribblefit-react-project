@@ -7,7 +7,19 @@
       "password": "Irfad1416941%",
       "role": "user",
       "createdAt": "2025-11-26T09:47:56.280Z",
-      "cart": [],
+      "cart": [
+        {
+          "id": 6,
+          "name": "REAL MADRID 2025/26 THIRD KIT",
+          "price": "₹1099",
+          "image": "src/assets/real-third.webp",
+          "size": "M",
+          "quantity": 1,
+          "inStock": true,
+          "team": "Real Madrid",
+          "customizationData": null
+        }
+      ],
       "addresses": [
         {
           "name": "Irfad",
@@ -17,7 +29,7 @@
           "state": "Kerala",
           "pincode": "671124",
           "landmark": "Near Daffodil Hills",
-          "isDefault": true
+          "isDefault": false
         },
         {
           "name": "Irfad",
@@ -27,7 +39,7 @@
           "state": "Kerala",
           "pincode": "673634",
           "landmark": "Kinfra Buikding",
-          "isDefault": false
+          "isDefault": true
         }
       ],
       "orders": [
@@ -452,6 +464,138 @@
           "codCharges": 10,
           "trackingNumber": "TRK650881342",
           "addressSource": "saved_address"
+        },
+        {
+          "id": "1768119782341",
+          "orderNumber": "ORD-19782340",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2026-01-11T08:23:02.341Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
+              "price": 899,
+              "priceString": "₹899.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "AS ROMA",
+              "league": "SERIE A",
+              "customizationData": null,
+              "total": 899
+            },
+            {
+              "id": "8",
+              "name": "Portugal Black Panther Kit",
+              "image": "/images/portugal-60.webp",
+              "price": 2196,
+              "priceString": "₹2,196.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "PORTUGAL",
+              "league": "",
+              "customizationData": {
+                "playerName": "IRFAD",
+                "playerNumber": "7",
+                "patch": {
+                  "id": "worldcup",
+                  "name": "World Cup",
+                  "price": 399,
+                  "image": "/images/patches/worldcup-badge.webp"
+                },
+                "customizationTotal": 997
+              },
+              "total": 2196
+            }
+          ],
+          "subtotal": 3095,
+          "discount": 619,
+          "couponDiscount": 619,
+          "total": 2486,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Kinfra Building, Kakkanchery",
+            "city": "Kozhikode",
+            "state": "Kerala",
+            "pincode": "673634",
+            "landmark": "Kinfra Buikding"
+          },
+          "couponApplied": "DRIBBLEFIT20",
+          "codCharges": 10,
+          "trackingNumber": "TRK247750508",
+          "addressSource": "saved_address"
+        },
+        {
+          "id": "1768494556066",
+          "orderNumber": "ORD-94556065",
+          "userId": "1764150476280",
+          "username": "Irfad",
+          "userEmail": "ahmedirfad8@gmail.com",
+          "date": "2026-01-15T16:29:16.066Z",
+          "status": "Delivered",
+          "items": [
+            {
+              "id": "7",
+              "name": "AS ROMA 2025/26 THIRD JERSEY",
+              "image": "/images/roma-third-1.webp",
+              "price": 1796,
+              "priceString": "₹1,796.00",
+              "size": "L",
+              "quantity": 1,
+              "team": "AS ROMA",
+              "league": "SERIE A",
+              "customizationData": {
+                "playerName": "HIBA",
+                "playerNumber": "7",
+                "patch": {
+                  "id": "champions-league",
+                  "name": "Champions League",
+                  "price": 299,
+                  "image": "/images/patches/champions-league-badge.webp"
+                },
+                "customizationTotal": 897
+              },
+              "total": 1796
+            },
+            {
+              "id": "9",
+              "name": "Ajax 125th Anniversary Special Jersey",
+              "image": "/images/ajax-125.webp",
+              "price": 1999,
+              "priceString": "₹1,999.00",
+              "size": "M",
+              "quantity": 1,
+              "team": "AJAX ",
+              "league": "EREDIVISIE",
+              "customizationData": null,
+              "total": 1999
+            }
+          ],
+          "subtotal": 3795,
+          "discount": 1328.25,
+          "couponDiscount": 1328.25,
+          "total": 2476.75,
+          "paymentMethod": "cod",
+          "shippingAddress": {
+            "name": "Irfad",
+            "email": "ahmedirfad8@gmail.com",
+            "phone": "7736919863",
+            "address": "Kinfra Building, Kakkanchery",
+            "city": "Kozhikode",
+            "state": "Kerala",
+            "pincode": "673634",
+            "landmark": "Kinfra Buikding"
+          },
+          "couponApplied": "REPUBLIC2026",
+          "codCharges": 10,
+          "trackingNumber": "TRK281667327",
+          "addressSource": "saved_address"
         }
       ],
       "phone": "7736919863",
@@ -459,7 +603,8 @@
       "dateOfBirth": "2005-02-05",
       "isBlocked": false,
       "blockedAt": null,
-      "blockedBy": null
+      "blockedBy": null,
+      "profilePhoto": "data:image/jpeg;base64,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"
     },
     {
       "id": "1764150947274",
@@ -556,9 +701,9 @@
       "phone": "9809221196",
       "fullName": "Mohammed Azeem",
       "dateOfBirth": "2003-10-25",
-      "isBlocked": false,
-      "blockedAt": null,
-      "blockedBy": null
+      "isBlocked": true,
+      "blockedAt": "2026-02-04T07:23:30.795Z",
+      "blockedBy": "admin"
     },
     {
       "id": "1764923078286",
@@ -907,7 +1052,7 @@
       "featured": true
     },
     {
-      "id": "2",
+      "id": "1775538049189",
       "name": "Liverpool 2025/26 Away Jersey",
       "price": "₹999",
       "image": "/images/liv-newaway.webp",
@@ -1029,7 +1174,7 @@
         "L",
         "M"
       ],
-      "inStock": true,
+      "inStock": false,
       "featured": false
     },
     {
@@ -1111,9 +1256,6 @@
       "league": "LALIGA",
       "description": "A masterpiece born from the world of football and hip-hop culture, the FC Barcelona x Travis Scott Jersey brings bold design with signature Cactus Jack energy. This limited-edition piece blends the club’s iconic blaugrana colors with Travis Scott’s dark, flame-driven aesthetic.",
       "sizes": [
-        "L",
-        "M",
-        "S",
         "XL",
         "XXL"
       ],
@@ -1258,6 +1400,183 @@
         "XXL"
       ],
       "inStock": false,
+      "featured": false
+    },
+    {
+      "id": "1775538049188",
+      "name": "Brazil 2026 World Cup Away Jersey",
+      "price": "₹1,499",
+      "image": "images/brazil-wc1.webp",
+      "category": "international-kits",
+      "team": "BRAZIL",
+      "league": "",
+      "description": "Step onto the pitch with the style of the Seleção in the Brazil 2026 World Cup Away Jersey (Player Version). Featuring a bold dark blue design with modern dynamic patterns, this jersey delivers a powerful and sleek look that represents Brazil’s fearless football identity on the world stage.\n\nEngineered for elite performance, the player version is crafted with ultra-lightweight, breathable fabric that enhances airflow and comfort during intense play. The slim athletic fit mirrors the exact style worn by professional players, while the premium heat-pressed Brazil crest with championship stars adds an authentic match-ready finish.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774692278761",
+      "name": "Germany 2026 World Cup Away Jersey",
+      "price": "₹1,499",
+      "image": "/images/germany-wc1.webp",
+      "category": "international-kits",
+      "team": "GERMANY",
+      "league": "",
+      "description": "Represent Die Mannschaft with elite performance in the Germany 2026 World Cup Away Jersey (Player Version). Designed with a sleek dark navy base and striking teal accents, this modern away jersey captures the strength, precision, and tradition of German football.\n\nThe Player Version delivers the same high-performance feel worn by professionals on the pitch. Engineered with advanced lightweight fabric and enhanced breathability, it offers a slim athletic fit that supports maximum comfort and mobility during intense matches or training sessions.\n\nFinished with the iconic Germany national team crest and premium detailing, this jersey is perfect for fans who want an authentic match-day experience with a bold and stylish look.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774693359176",
+      "name": "Portugal 2026 World Cup Home Jersey",
+      "price": "₹1,499",
+      "image": "/images/portugal-home-wc1.webp",
+      "category": "international-kits",
+      "team": "PORTUGAL",
+      "league": "",
+      "description": "Celebrate the pride, passion, and legacy of Portuguese football with the Portugal 2026 World Cup Home Jersey. Designed in the iconic deep red shade, this jersey reflects Portugal’s fearless playing style and rich football heritage on the world’s biggest stage.\n\nCrafted with lightweight, breathable performance fabric, it keeps you comfortable whether you’re cheering from the stands or playing on the pitch. Subtle wave-textured patterns across the jersey add depth and elegance, while the contrasting collar and sleeve trims enhance its premium look. The national crest sits proudly on the chest, symbolizing unity, history, and ambition.\n\nPerfect for match days, casual wear, or your football collection, this jersey is a must-have for every Portugal supporter who wants to back their team in style during the 2026 World Cup.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774693561405",
+      "name": "Brazil 2026 World Cup Home Jersey",
+      "price": "₹1,499",
+      "image": "/images/brazil-home-wc1.webp",
+      "category": "international-kits",
+      "team": "BRAZIL",
+      "league": "",
+      "description": "Represent the legacy of the Seleção with the Brazil 2026 World Cup Home Jersey (Player Version). Featuring the iconic yellow base with classic green accents, this jersey stays true to Brazil’s rich football heritage while delivering a clean and modern look for the world stage.\n\nBuilt for elite performance, the player version is crafted with ultra-lightweight, breathable fabric that ensures maximum comfort during intense matches. The slim athletic fit is designed to match what professional players wear, offering a sharp and performance-focused feel. The premium heat-pressed Brazil crest with championship stars adds an authentic match-ready finish.\n\nPerfect for dedicated fans and collectors, this jersey combines timeless design with top-level performance inspired by one of football’s greatest nations.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774694145694",
+      "name": "Italy 2026 World Cup Away Jersey",
+      "price": "₹1,499",
+      "image": "/images/italy-away-wc1.webp",
+      "category": "international-kits",
+      "team": "ITALY",
+      "league": "",
+      "description": "Step into elegance and performance with the Italy 2026 World Cup Away Jersey (Player Version). Featuring a clean white base with subtle textured patterns, this jersey reflects Italy’s timeless football heritage combined with a modern, refined design. The tricolor crest stands proudly on the chest, symbolizing pride, history, and excellence on the world stage.\n\nBuilt for elite performance, the player version is crafted with ultra-lightweight, breathable fabric that ensures maximum comfort during high-intensity play. The slim athletic fit is identical to what professionals wear, offering a sleek and performance-driven feel. Premium heat-pressed details enhance the overall finish, giving it an authentic match-ready look.\n\nPerfect for dedicated fans and collectors, this jersey delivers both style and top-level performance inspired by the Azzurri.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774695297841",
+      "name": "Argentina 2026 World Cup Away Jersey",
+      "price": "₹1,499",
+      "image": "/images/arg-away-wc1.webp",
+      "category": "international-kits",
+      "team": "ARGENTINA",
+      "league": "",
+      "description": "Stand out with the bold and modern Argentina 2026 World Cup Away Jersey (Player Version). Featuring a striking dark base with dynamic blue patterns, this jersey brings a powerful and stylish look to Argentina’s away kit while honoring the spirit of the reigning world champions.\n\nThe player version is designed with advanced performance fabric, offering a lightweight feel, enhanced breathability, and a slim athletic fit similar to what professionals wear on the pitch. The premium heat-pressed Argentina crest with championship stars and the iconic chest badge give the jersey an authentic match-ready appearance.\n\nEngineered for performance and style, this jersey is perfect for serious football fans who want the same elite feel worn by players during the World Cup.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774695648184",
+      "name": "Sweden 2026 World Cup Away Jersey",
+      "price": "₹1,499",
+      "image": "/images/swe-away-wc.jpg",
+      "category": "international-kits",
+      "team": "SWEDEN",
+      "league": "",
+      "description": "The premium heat-pressed Sweden crest with the iconic chest badge give the jersey an authentic match-ready appearance.\n\nEngineered for performance and style, this jersey is perfect for serious football fans who want the same elite feel worn by players during the World Cup.\n\nTaking its visual cues and aesthetics from 70s patterns, three different tones of blue come together on Sweden’s away jersey to form a bold, all-over graphic design, a nod to the nation’s rich cultural heritage. With modern typography on the back of the neck reading ‘Sverige’ - or Sweden in English – this retro influence, blended with a contemporary touch, gives the design a fresh look for today’s fans.",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1774696495659",
+      "name": "Chile 2026 Away Jersey",
+      "price": "₹1,299",
+      "image": "/images/chile-away-wc.jpg",
+      "category": "international-kits",
+      "team": "CHILE",
+      "league": "",
+      "description": "Chile’s away kit takes its look from the flowering desert, a rare phenomenon of the Atacama Desert.  Celebrating the country’s unique natural landscape, striking pink flowers feature in an all-over graphic print on an off-white base, with subtle brown detailing representing the cracks from which they emerge.\n\nThe design is finished with a shield motif taken from the Federation crest across the back of the neck in black. ",
+      "sizes": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1775630883733",
+      "name": "Portugal Vintage Classic Jersey",
+      "price": "₹1,999",
+      "image": "/images/retro-porfull.webp",
+      "category": "retro-jerseys",
+      "team": "PORTUGAL",
+      "league": "",
+      "description": "This Portugal Classic jersey carries a clean, classic elegance with a bold touch of identity. The base is a crisp white, giving it a timeless and premium look, while the horizontal band across the chest blends deep red and dark green—colors strongly associated with passion, pride, and heritage.\n\nAt the center-left sits a refined portugal crest, symbolizing tradition and national pride, while the number 7 on the right adds a sense of individuality and legacy—often worn by iconic players. The collar design enhances its vintage football aesthetic, making it feel both retro and modern at the same time.",
+      "sizes": [
+        "L",
+        "XL"
+      ],
+      "inStock": true,
+      "featured": false
+    },
+    {
+      "id": "1775631904560",
+      "name": "Barcelona Vintage Classic Jersey",
+      "price": "₹1,999",
+      "image": "/images/culers.png",
+      "category": "retro-jerseys",
+      "team": "Fc Barcelona",
+      "league": "La Liga",
+      "description": "This Barcelona vintage classic jersey captures the essence of timeless football heritage with effortless style. The deep navy and rich maroon vertical stripes instantly evoke tradition, symbolizing decades of passion, dominance, and identity.\n\nThe clean collar design adds a retro charm, giving it that old-school football elegance that feels both authentic and iconic. The subtle “estd. 1899” detail proudly nods to the club’s historic roots, while the crest stands strong—representing pride, unity, and legacy.\n\nAt the center, the bold “Cule” script brings a modern emotional touch, connecting fans to the soul of the club. The long sleeves enhance its classic appeal, making it feel like a piece straight out of football’s golden era.",
+      "sizes": [
+        "L",
+        "M",
+        "XL"
+      ],
+      "inStock": true,
       "featured": false
     }
   ]

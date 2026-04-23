@@ -3,6 +3,7 @@ import { useAuth } from '../Contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import Navbar from '../Components/Layout/Navbar';
 import Footer from '../Components/Layout/Footer';
+import api from '../Api/Axios';
 
 function ReturnsExchanges() {
   const { isAuthenticated, user } = useAuth();
@@ -13,6 +14,9 @@ function ReturnsExchanges() {
     condition: '',
     comments: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
 
   const [activeFAQ, setActiveFAQ] = useState(null);
 
@@ -115,19 +119,48 @@ function ReturnsExchanges() {
       ...prev,
       [name]: value
     }));
+    setError('');
   };
 
-  const handleSubmitReturn = (e) => {
+  const handleSubmitReturn = async (e) => {
     e.preventDefault();
-    // In a real app, this would submit to your backend
-    alert(`Return request submitted for order ${returnForm.orderNumber}. Our team will contact you within 24 hours.`);
-    setReturnForm({
-      orderNumber: '',
-      reason: '',
-      product: '',
-      condition: '',
-      comments: ''
-    });
+    setIsSubmitting(true);
+    setError('');
+
+    try {
+      const response = await api.post('/returns/request', {
+        ...returnForm,
+        userName: user?.username,
+        userEmail: user?.email
+      });
+
+      if (response.data.success) {
+        setSubmitted(true);
+        setReturnForm({
+          orderNumber: '',
+          reason: '',
+          product: '',
+          condition: '',
+          comments: ''
+        });
+        setTimeout(() => setSubmitted(false), 5000);
+      } else {
+        setError('Failed to submit return request. Please try again.');
+      }
+    } catch (error) {
+      console.error('Return request error:', error);
+      setError(error.response?.data?.message || 'Failed to submit request. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // ✅ Updated Contact Info
+  const contactInfo = {
+    email: 'dribblefit10@gmail.com',
+    phone: '+91 7736919863',
+    hours: 'Monday to Saturday: 10 AM - 7 PM',
+    address: 'Kinfa Building Kakkanchery, Chelembra, Malappuram, Kerala - 673635'
   };
 
   if (!isAuthenticated) {
@@ -227,7 +260,7 @@ function ReturnsExchanges() {
                 </div>
               </div>
 
-              {/* Contact Info */}
+              {/* Contact Info - UPDATED */}
               <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-6">
                 <h3 className="text-white font-poppins font-semibold text-xl mb-6">Need Help?</h3>
                 <div className="space-y-4">
@@ -237,7 +270,7 @@ function ReturnsExchanges() {
                     </div>
                     <div>
                       <div className="text-gray-400 text-sm">Email Support</div>
-                      <div className="text-white text-sm">returns@jerseystore.com</div>
+                      <div className="text-white text-sm">{contactInfo.email}</div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -246,8 +279,8 @@ function ReturnsExchanges() {
                     </div>
                     <div>
                       <div className="text-gray-400 text-sm">Call Us</div>
-                      <div className="text-white">+91 98765 43210</div>
-                      <div className="text-gray-400 text-xs">Mon-Sat: 9 AM - 7 PM</div>
+                      <div className="text-white">{contactInfo.phone}</div>
+                      <div className="text-gray-400 text-xs">{contactInfo.hours}</div>
                     </div>
                   </div>
                 </div>
@@ -283,6 +316,25 @@ function ReturnsExchanges() {
               {/* Return Request Form */}
               <div className="bg-[#111111] border border-[#00ff00]/20 rounded-2xl p-8">
                 <h2 className="text-2xl font-bold text-white font-poppins mb-6">Start a Return</h2>
+                
+                {submitted && (
+                  <div className="mb-6 p-4 bg-[#00ff00]/10 border border-[#00ff00] rounded-lg text-[#00ff00] font-semibold flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Return request submitted successfully! Our team will contact you within 24 hours.
+                  </div>
+                )}
+
+                {error && (
+                  <div className="mb-6 p-4 bg-red-500/10 border border-red-500 rounded-lg text-red-400 font-semibold flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {error}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmitReturn} className="space-y-6">
                   <div>
                     <label className="block text-gray-300 text-sm mb-2">Order Number *</label>
@@ -379,9 +431,10 @@ function ReturnsExchanges() {
                   <div className="pt-4">
                     <button
                       type="submit"
-                      className="w-full bg-gradient-to-r from-[#00ff00] to-emerald-600 text-black font-bold py-4 rounded-lg hover:opacity-90 transition-opacity"
+                      disabled={isSubmitting}
+                      className="w-full bg-gradient-to-r from-[#00ff00] to-emerald-600 text-black font-bold py-4 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                     >
-                      SUBMIT RETURN REQUEST
+                      {isSubmitting ? 'SUBMITTING...' : 'SUBMIT RETURN REQUEST'}
                     </button>
                     <p className="text-gray-400 text-xs text-center mt-3">
                       By submitting, you agree to our Return Policy. We'll contact you within 24 hours.

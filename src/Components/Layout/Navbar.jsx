@@ -14,11 +14,11 @@ function Navbar() {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [showResults, setShowResults] = useState(false)
-  const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(false)
   const [showProfileDropdown, setShowProfileDropdown] = useState(false)
   const navigate = useNavigate()
   const dropdownRef = useRef(null)
+  const searchTimeout = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -32,19 +32,6 @@ function Navbar() {
       document.removeEventListener('mousedown', handleClickOutside)
     }
   }, [])
-
-  useEffect(() => {
-    fetchProducts()
-  }, [])
-
-  const fetchProducts = async () => {
-    try {
-      const response = await api.get('/products')
-      setProducts(response.data)
-    } catch (error) {
-      console.error('Error fetching products for search:', error)
-    }
-  }
 
   const categories = [
     '2025-26-season-kits',
@@ -80,6 +67,7 @@ function Navbar() {
     }, 3000)
   }
 
+  // ✅ Search using BACKEND API
   const handleSearch = (e) => {
     const value = e.target.value
     setSearchTerm(value)
@@ -90,19 +78,24 @@ function Navbar() {
       return
     }
 
+    if (searchTimeout.current) {
+      clearTimeout(searchTimeout.current)
+    }
+
     setLoading(true)
     
-    setTimeout(() => {
-      const filtered = products.filter(product =>
-        product.name.toLowerCase().includes(value.toLowerCase()) ||
-        product.team?.toLowerCase().includes(value.toLowerCase()) ||
-        product.league?.toLowerCase().includes(value.toLowerCase()) ||
-        product.category?.toLowerCase().includes(value.toLowerCase())
-      )
-      
-      setSearchResults(filtered.slice(0, 5))
-      setShowResults(true)
-      setLoading(false)
+    searchTimeout.current = setTimeout(async () => {
+      try {
+        const response = await api.get(`/products/search?q=${encodeURIComponent(value)}`)
+        const results = response.data.products || response.data
+        setSearchResults(results.slice(0, 5))
+        setShowResults(true)
+      } catch (error) {
+        console.error('Search error:', error)
+        setSearchResults([])
+      } finally {
+        setLoading(false)
+      }
     }, 300)
   }
 
@@ -319,8 +312,16 @@ function Navbar() {
                     onClick={() => setShowProfileDropdown(!showProfileDropdown)}
                     className="flex items-center gap-2 text-white hover:text-[#00ff00] transition-colors"
                   >
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center font-bold text-black">
-                      {user.username?.charAt(0).toUpperCase()}
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center font-bold text-black overflow-hidden">
+                      {user.profilePhoto ? (
+                        <img 
+                          src={user.profilePhoto} 
+                          alt={user.username}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        user.username?.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <svg 
                       className={`w-4 h-4 transition-transform duration-200 ${showProfileDropdown ? 'rotate-180' : ''}`}
@@ -332,13 +333,20 @@ function Navbar() {
                     </svg>
                   </button>
 
-                  {/* UPDATED PROFILE DROPDOWN - ADMIN PANEL AT BOTTOM */}
                   {showProfileDropdown && (
                     <div className="absolute right-0 mt-2 w-64 bg-[#1a1a1a] border border-[#00ff00]/30 rounded-lg shadow-xl z-50 animate-fade-in overflow-hidden">
                       <div className="p-4 border-b border-gray-800 bg-gradient-to-r from-[#0a0a0a] to-[#1a1a1a]">
                         <div className="flex items-center gap-3 mb-3">
-                          <div className="w-12 h-12 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center font-bold text-black text-xl">
-                            {user.username?.charAt(0).toUpperCase()}
+                          <div className="w-12 h-12 bg-gradient-to-br from-[#00ff00] to-emerald-600 rounded-full flex items-center justify-center font-bold text-black text-xl overflow-hidden">
+                            {user.profilePhoto ? (
+                              <img 
+                                src={user.profilePhoto} 
+                                alt={user.username}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              user.username?.charAt(0).toUpperCase()
+                            )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-white font-poppins font-semibold text-lg truncate">
@@ -360,7 +368,6 @@ function Navbar() {
                       </div>
                       
                       <div className="py-2">
-                        {/* Regular Account Links */}
                         <Link
                           to="/profile"
                           onClick={() => setShowProfileDropdown(false)}
@@ -404,7 +411,6 @@ function Navbar() {
                           </div>
                         </Link>
                         
-                        {/* ADMIN PANEL - Added as separate section */}
                         {isAdmin && (
                           <div className="border-t border-gray-800/50 pt-2">
                             <button
@@ -423,7 +429,6 @@ function Navbar() {
                           </div>
                         )}
                         
-                        {/* Logout - Bottom of dropdown */}
                         <button
                           onClick={handleLogout}
                           className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors duration-200 border-t border-gray-800/50 mt-2"
@@ -566,7 +571,6 @@ function Navbar() {
                 Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
               </Link>
               
-              {/* UPDATED MOBILE MENU */}
               {isAuthenticated && user && (
                 <>
                   <div className="pt-4 border-t border-gray-800 text-sm text-gray-300">
@@ -601,7 +605,6 @@ function Navbar() {
                       My Orders
                     </Link>
                     
-                    {/* ADMIN PANEL IN MOBILE MENU */}
                     {isAdmin && (
                       <button
                         onClick={() => {

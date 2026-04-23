@@ -2,7 +2,7 @@ import React from 'react'
 import { useWishlist } from '../../Contexts/WishlistContext'
 
 function WishlistButton({ product, size = 'md' }) {
-  const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist()
+  const { toggleWishlist, isInWishlist } = useWishlist()
   
   const productId = product.id
   const isWishlisted = isInWishlist(productId)
@@ -11,31 +11,14 @@ function WishlistButton({ product, size = 'md' }) {
     e.preventDefault()
     e.stopPropagation()
     
-    if (isWishlisted) {
-      removeFromWishlist(productId)
-      
-      // Simple notification
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded-lg z-50'
-      notification.textContent = 'Removed from wishlist'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 2000)
-    } else {
-      addToWishlist({
-        id: productId,
-        name: product.name,
-        price: product.price,
-        image: product.image || product.images?.[0] || '',
-        team: product.team || ''
-      })
-      
-      // Simple notification
-      const notification = document.createElement('div')
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg z-50'
-      notification.textContent = 'Added to wishlist'
-      document.body.appendChild(notification)
-      setTimeout(() => notification.remove(), 2000)
-    }
+    toggleWishlist(product)
+    
+    // Show notification
+    const notification = document.createElement('div')
+    notification.className = `fixed top-4 right-4 ${isWishlisted ? 'bg-red-500' : 'bg-green-500'} text-white px-4 py-2 rounded-lg z-50`
+    notification.textContent = isWishlisted ? 'Removed from wishlist' : 'Added to wishlist'
+    document.body.appendChild(notification)
+    setTimeout(() => notification.remove(), 2000)
   }
 
   const sizeClass = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10'
