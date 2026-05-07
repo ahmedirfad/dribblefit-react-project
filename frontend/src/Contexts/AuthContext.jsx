@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     setLoading(true)
     try {
-      const response = await api.post('/users', userData)
+      const response = await api.post('/users/register', userData)
 
       return {
         success: true,
