@@ -19,3 +19,6 @@ Thumbs.db
 # editor files
 .vscode/
 .idea/
+
+# mock backup files
+db.json
