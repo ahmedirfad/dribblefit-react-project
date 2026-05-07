@@ -19,7 +19,7 @@ function BestSellers() {
   })
   const [loading, setLoading] = useState(true)
 
-  // ✅ Load settings from BACKEND API
+  
   useEffect(() => {
     fetchBestSellersSettings()
   }, [])

@@ -1,8 +1,6 @@
 const Order = require('../../models/Order');
 
-// @desc    Get all orders (admin view with pagination and filters)
-// @route   GET /api/admin/orders
-// @access  Admin only
+
 const getAllOrders = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -67,9 +65,6 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-// @desc    Get single order by ID
-// @route   GET /api/admin/orders/:id
-// @access  Admin only
 const getOrderById = async (req, res) => {
   try {
     const order = await Order.findOne({ id: req.params.id });
@@ -83,9 +78,7 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// @desc    Update order status
-// @route   PATCH /api/admin/orders/:id/status
-// @access  Admin only
+
 const updateOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -116,9 +109,7 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
-// @desc    Delete order
-// @route   DELETE /api/admin/orders/:id
-// @access  Admin only
+
 const deleteOrder = async (req, res) => {
   try {
     const order = await Order.findOneAndDelete({ id: req.params.id });

@@ -1,8 +1,6 @@
 const HomeSection = require('../../models/HomeSection');
 
-// @desc    Get all home sections
-// @route   GET /api/admin/home/sections
-// @access  Admin only
+
 const getAllSections = async (req, res) => {
   try {
     let sections = await HomeSection.find().sort({ sectionId: 1 });
@@ -29,9 +27,6 @@ const getAllSections = async (req, res) => {
   }
 };
 
-// @desc    Get single section by ID
-// @route   GET /api/admin/home/sections/:sectionId
-// @access  Admin only
 const getSectionById = async (req, res) => {
   try {
     const { sectionId } = req.params;
@@ -59,9 +54,6 @@ const getSectionById = async (req, res) => {
   }
 };
 
-// @desc    Update section
-// @route   PUT /api/admin/home/sections/:sectionId
-// @access  Admin only
 const updateSection = async (req, res) => {
   try {
     const { sectionId } = req.params;
@@ -91,7 +83,6 @@ const updateSection = async (req, res) => {
   }
 };
 
-// ==================== DEFAULT DATA FOR ALL 7 SECTIONS ====================
 
 function getDefaultSection(sectionId) {
   const defaults = {
@@ -213,7 +204,7 @@ async function seedDefaultSections() {
   
   if (sections.length > 0) {
     await HomeSection.insertMany(sections);
-    console.log('✅ 7 default homepage sections seeded successfully');
+    console.log(' 7 default homepage sections seeded successfully');
   }
   
   return await HomeSection.find().sort({ sectionId: 1 });

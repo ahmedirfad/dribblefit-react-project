@@ -2,12 +2,10 @@ const express = require('express');
 const router = express.Router();
 const protectRoutes = require('../middleware/protectRoutes');
 const adminMiddleware = require('../middleware/adminMiddleware');
-const { uploadImage, uploadVideo } = require('../middleware/upload');  // ✅ UPDATED
+const { uploadImage } = require('../middleware/upload'); 
 
-// Dashboard Controller
 const { getDashboardStats } = require('../controllers/admin/adminDashboardController');
 
-// User Management Controller
 const {
   getAllUsers,
   getUserById,
@@ -16,7 +14,6 @@ const {
   deleteUser
 } = require('../controllers/admin/adminUserController');
 
-// Product Management Controller
 const {
   getAllProducts,
   getProductById,
@@ -26,7 +23,6 @@ const {
   getProductsByStock
 } = require('../controllers/admin/adminProductController');
 
-// Order Management Controller
 const {
   getAllOrders,
   getOrderById,
@@ -34,13 +30,10 @@ const {
   deleteOrder
 } = require('../controllers/admin/adminOrderController');
 
-// All admin routes require authentication AND admin role
 router.use(protectRoutes, adminMiddleware);
 
-// Dashboard Stats
 router.get('/dashboard/stats', getDashboardStats);
 
-// ✅ IMAGE Upload endpoint (single)
 router.post('/upload', uploadImage.single('image'), (req, res) => {
   try {
     if (!req.file) {
@@ -58,7 +51,6 @@ router.post('/upload', uploadImage.single('image'), (req, res) => {
   }
 });
 
-// ✅ MULTIPLE Image Upload endpoint (up to 10 images at once)
 router.post('/upload-multiple', uploadImage.array('images', 10), (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -83,32 +75,14 @@ router.post('/upload-multiple', uploadImage.array('images', 10), (req, res) => {
   }
 });
 
-// ✅ VIDEO Upload endpoint (NEW)
-router.post('/upload-video', uploadVideo.single('video'), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.status(400).json({ success: false, message: 'No video uploaded' });
-    }
-    
-    res.json({
-      success: true,
-      videoUrl: req.file.path,
-      publicId: req.file.filename
-    });
-  } catch (error) {
-    console.error('Video upload error:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
 
-// User Management Routes
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);
 router.patch('/users/:id/block', toggleUserBlock);
 router.patch('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
 
-// Product Management Routes
+
 router.get('/products', getAllProducts);
 router.get('/products/stock/:status', getProductsByStock);
 router.get('/products/:id', getProductById);
@@ -116,7 +90,7 @@ router.post('/products', createProduct);
 router.put('/products/:id', updateProduct);
 router.delete('/products/:id', deleteProduct);
 
-// Order Management Routes
+
 router.get('/orders', getAllOrders);
 router.get('/orders/:id', getOrderById);
 router.patch('/orders/:id/status', updateOrderStatus);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import api from '../../../Api/Axios'
 
 function BestSellersSettings() {
   const [settings, setSettings] = useState({
@@ -8,53 +9,50 @@ function BestSellersSettings() {
     section_subtitle: 'Discover our most popular football jerseys loved by fans worldwide',
     view_all_button_text: 'VIEW ALL PRODUCTS',
     view_all_button_link: '/products',
-    products: [
-      {
-        id: 7,
-        name: "AS ROMA 2025/26 THIRD JERSEY",
-        price: "₹899",
-        images: ["", "", ""],
-        team: "AS Roma",
-        inStock: true,
-        sizes: ['M', 'L', 'XL']
-      },
-      {
-        id: 1774691179866,
-        name: "BRAZIL 2025/26 AWAY KIT",
-        price: "₹1499",
-        images: ["", "", ""],
-        team: "BRAZIL",
-        inStock: true,
-        sizes: ['S', 'M', 'L', 'XL']
-      },
-      {
-        id: 2,
-        name: "LIVERPOOL 2025/26 AWAY JERSEY",
-        price: "₹999",
-        images: ["", "", ""],
-        team: "Liverpool",
-        inStock: true,
-        sizes: ['S', 'M', 'L', 'XL']
-      }
-    ]
+    products: []
   })
   
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
-  // Load settings from localStorage
+  // ✅ Load settings from BACKEND API
   useEffect(() => {
-    const savedSettings = localStorage.getItem('bestSellersSettings')
-    if (savedSettings) {
-      const data = JSON.parse(savedSettings)
-      setSettings(data)
-    }
+    fetchSettings()
   }, [])
 
-  // Save settings
-  const handleSave = () => {
-    localStorage.setItem('bestSellersSettings', JSON.stringify(settings))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  const fetchSettings = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/admin/home/sections/bestsellers')
+      
+      if (response.data.success && response.data.section) {
+        setSettings(response.data.section)
+      }
+    } catch (error) {
+      console.error('Error fetching best sellers:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // ✅ Save to BACKEND API
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await api.put('/admin/home/sections/bestsellers', settings)
+      
+      if (response.data.success) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+        showToast('Settings saved successfully!', 'success')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      showToast('Failed to save settings', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Reset to default
@@ -66,7 +64,7 @@ function BestSellersSettings() {
       section_subtitle: 'Discover our most popular football jerseys loved by fans worldwide',
       view_all_button_text: 'VIEW ALL PRODUCTS',
       view_all_button_link: '/products',
-      products: settings.products
+      products: []
     }
     setSettings(defaultSettings)
   }
@@ -104,26 +102,41 @@ function BestSellersSettings() {
   // Update product image
   const updateProductImage = (index, imageIndex, value) => {
     const newProducts = [...settings.products]
+    if (!newProducts[index].images) newProducts[index].images = ["", "", ""]
     newProducts[index].images[imageIndex] = value
     setSettings({ ...settings, products: newProducts })
   }
 
+  const showToast = (message, type = 'success') => {
+    const toast = document.createElement('div')
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse ${
+      type === 'success' ? 'bg-[#00ff00] text-black' : 'bg-red-500 text-white'
+    }`
+    toast.textContent = message
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 3000)
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex justify-center items-center h-64">
+        <div className="text-[#00ff00] text-lg">Loading settings...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">Best Sellers Settings</h1>
         <p className="text-gray-400 text-sm">Manage your best selling products section</p>
       </div>
 
-      {/* Main Card */}
       <div className="bg-[#111111] border border-[#00ff00]/20 rounded-xl overflow-hidden">
         
-        {/* Section Settings - Compact */}
         <div className="p-5 border-b border-[#00ff00]/20">
           <h2 className="text-lg font-bold text-white mb-3">Section Settings</h2>
           
-          {/* Active Toggle - Compact */}
           <div className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg border border-[#00ff00]/10 mb-4">
             <div>
               <h3 className="text-white font-medium text-sm">Enable Best Sellers Section</h3>
@@ -197,7 +210,6 @@ function BestSellersSettings() {
           </div>
         </div>
 
-        {/* Products Management - Compact Cards */}
         <div className="p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-bold text-white">Products Management</h2>
@@ -212,7 +224,6 @@ function BestSellersSettings() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {settings.products.map((product, index) => (
               <div key={product.id} className="bg-[#1a1a1a] border border-[#00ff00]/20 rounded-lg p-3 hover:border-[#00ff00]/40 transition-all">
-                {/* Product Header */}
                 <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#00ff00]/10">
                   <h3 className="text-white font-semibold text-sm">Product {index + 1}</h3>
                   <button
@@ -223,7 +234,6 @@ function BestSellersSettings() {
                   </button>
                 </div>
 
-                {/* Product Fields - Compact */}
                 <div className="space-y-2">
                   <div>
                     <label className="block text-gray-400 text-xs mb-0.5">Product Name</label>
@@ -269,7 +279,6 @@ function BestSellersSettings() {
                     </div>
                   </div>
 
-                  {/* Product Images - Compact */}
                   <div>
                     <label className="block text-gray-400 text-xs mb-0.5">Images (3 URLs)</label>
                     <div className="space-y-1">
@@ -277,7 +286,7 @@ function BestSellersSettings() {
                         <input
                           key={imgIndex}
                           type="text"
-                          value={product.images[imgIndex]}
+                          value={product.images?.[imgIndex] || ""}
                           onChange={(e) => updateProductImage(index, imgIndex, e.target.value)}
                           placeholder={`Image ${imgIndex + 1} URL`}
                           className="w-full px-2 py-1 bg-[#0a0a0a] border border-[#00ff00]/20 rounded text-white focus:outline-none focus:border-[#00ff00] text-xs"
@@ -286,7 +295,6 @@ function BestSellersSettings() {
                     </div>
                   </div>
 
-                  {/* Product ID */}
                   <div className="pt-1">
                     <label className="block text-gray-500 text-xs">ID: {product.id}</label>
                   </div>
@@ -302,7 +310,6 @@ function BestSellersSettings() {
           )}
         </div>
 
-        {/* Actions */}
         <div className="border-t border-[#00ff00]/20 p-4 bg-[#1a1a1a] flex items-center justify-between">
           <button
             onClick={handleReset}
@@ -313,14 +320,14 @@ function BestSellersSettings() {
           
           <button
             onClick={handleSave}
-            className="px-5 py-1.5 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all text-sm"
+            disabled={saving}
+            className="px-5 py-1.5 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all text-sm disabled:opacity-50"
           >
-            💾 Save Changes
+            {saving ? 'Saving...' : '💾 Save Changes'}
           </button>
         </div>
       </div>
 
-      {/* Success Message */}
       {saved && (
         <div className="fixed bottom-4 right-4 bg-[#00ff00] text-black px-5 py-2.5 rounded-lg font-semibold shadow-lg animate-pulse text-sm">
           ✓ Best sellers settings saved!

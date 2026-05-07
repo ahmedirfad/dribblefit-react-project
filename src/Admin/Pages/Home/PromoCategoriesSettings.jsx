@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import api from '../../../Api/Axios'
 
 function PromoCategoriesSettings() {
   const [settings, setSettings] = useState({
@@ -6,55 +7,32 @@ function PromoCategoriesSettings() {
     section_title: 'EXPLORE',
     highlighted_text: 'COLLECTIONS',
     section_subtitle: 'Discover our curated collections for every football enthusiast',
-    categories: [
-      {
-        id: 1,
-        name: "RETRO JERSEYS",
-        images: ["", "", ""],
-        route: "/products?category=retro-jerseys"
-      },
-      {
-        id: 2,
-        name: "ANTHEM JACKETS",
-        images: ["", "", ""],
-        route: "/products?category=anthem-jackets"
-      },
-      {
-        id: 3,
-        name: "2025/26 SEASON KITS",
-        images: ["", "", ""],
-        route: "/products?category=2025-26-season-kits"
-      }
-    ]
+    categories: []
   })
   
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
 
-  // Load settings from localStorage
+  // ✅ Load settings from BACKEND API
   useEffect(() => {
-    const savedSettings = localStorage.getItem('promoCategoriesSettings')
-    if (savedSettings) {
-      try {
-        const data = JSON.parse(savedSettings)
-        
-        // Convert old format to new format if needed
+    fetchSettings()
+  }, [])
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/admin/home/sections/promo')
+      
+      if (response.data.success && response.data.section) {
+        const data = response.data.section
+        // Ensure categories have proper structure
         if (data.categories) {
           const convertedCategories = data.categories.map(cat => {
-            // If old format (has 'image' instead of 'images')
-            if (cat.image && !cat.images) {
-              return {
-                ...cat,
-                images: [cat.image, "", ""]
-              }
-            }
-            // If images array is missing or not an array
-            if (!cat.images || !Array.isArray(cat.images)) {
-              return {
-                ...cat,
-                images: ["", "", ""]
-              }
-            }
             // Ensure images array has exactly 3 items
+            if (!cat.images || !Array.isArray(cat.images)) {
+              return { ...cat, images: ["", "", ""] }
+            }
             while (cat.images.length < 3) {
               cat.images.push("")
             }
@@ -62,19 +40,32 @@ function PromoCategoriesSettings() {
           })
           data.categories = convertedCategories
         }
-        
         setSettings(data)
-      } catch (error) {
-        console.error('Error loading settings:', error)
       }
+    } catch (error) {
+      console.error('Error fetching promo categories:', error)
+    } finally {
+      setLoading(false)
     }
-  }, [])
+  }
 
-  // Save settings
-  const handleSave = () => {
-    localStorage.setItem('promoCategoriesSettings', JSON.stringify(settings))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  // ✅ Save to BACKEND API
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await api.put('/admin/home/sections/promo', settings)
+      
+      if (response.data.success) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+        showToast('Settings saved successfully!', 'success')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      showToast('Failed to save settings', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Reset to default
@@ -84,12 +75,7 @@ function PromoCategoriesSettings() {
       section_title: 'EXPLORE',
       highlighted_text: 'COLLECTIONS',
       section_subtitle: 'Discover our curated collections for every football enthusiast',
-      categories: settings.categories.map(cat => ({
-        id: cat.id,
-        name: cat.name,
-        images: ["", "", ""],
-        route: cat.route
-      }))
+      categories: []
     }
     setSettings(defaultSettings)
   }
@@ -131,22 +117,36 @@ function PromoCategoriesSettings() {
     setSettings({ ...settings, categories: newCategories })
   }
 
+  const showToast = (message, type = 'success') => {
+    const toast = document.createElement('div')
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse ${
+      type === 'success' ? 'bg-[#00ff00] text-black' : 'bg-red-500 text-white'
+    }`
+    toast.textContent = message
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 3000)
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto flex justify-center items-center h-64">
+        <div className="text-[#00ff00] text-lg">Loading settings...</div>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-white mb-1">Promo Categories Settings</h1>
         <p className="text-gray-400 text-sm">Manage your promotional category cards (3 images per category for hover effect)</p>
       </div>
 
-      {/* Main Card */}
       <div className="bg-[#111111] border border-[#00ff00]/20 rounded-xl overflow-hidden">
         
-        {/* Section Settings */}
         <div className="p-5 border-b border-[#00ff00]/20">
           <h2 className="text-lg font-bold text-white mb-3">Section Settings</h2>
           
-          {/* Active Toggle */}
           <div className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-lg border border-[#00ff00]/10 mb-4">
             <div>
               <h3 className="text-white font-medium text-sm">Enable Promo Categories Section</h3>
@@ -197,7 +197,6 @@ function PromoCategoriesSettings() {
           </div>
         </div>
 
-        {/* Categories Management - Card Layout */}
         <div className="p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-bold text-white">Categories Management</h2>
@@ -211,13 +210,11 @@ function PromoCategoriesSettings() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {settings.categories && settings.categories.map((category, index) => {
-              // Ensure images array exists
               const images = category.images && Array.isArray(category.images) ? category.images : ["", "", ""]
               
               return (
                 <div key={category.id || index} className="bg-[#1a1a1a] border border-[#00ff00]/20 rounded-lg p-3 hover:border-[#00ff00]/40 transition-all">
                   
-                  {/* Category Header */}
                   <div className="flex items-center justify-between mb-2 pb-2 border-b border-[#00ff00]/10">
                     <h3 className="text-white font-semibold text-sm">Category {index + 1}</h3>
                     <button
@@ -228,7 +225,6 @@ function PromoCategoriesSettings() {
                     </button>
                   </div>
 
-                  {/* Category Fields */}
                   <div className="space-y-2">
                     <div>
                       <label className="block text-gray-400 text-xs mb-0.5">Category Name</label>
@@ -252,7 +248,6 @@ function PromoCategoriesSettings() {
                       />
                     </div>
 
-                    {/* 3 Image URLs */}
                     <div>
                       <label className="block text-gray-400 text-xs mb-1">Images (3 for hover effect)</label>
                       <div className="space-y-2">
@@ -296,7 +291,6 @@ function PromoCategoriesSettings() {
           )}
         </div>
 
-        {/* Actions */}
         <div className="border-t border-[#00ff00]/20 p-4 bg-[#1a1a1a] flex items-center justify-between">
           <button
             onClick={handleReset}
@@ -307,14 +301,14 @@ function PromoCategoriesSettings() {
           
           <button
             onClick={handleSave}
-            className="px-5 py-1.5 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all text-sm"
+            disabled={saving}
+            className="px-5 py-1.5 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all text-sm disabled:opacity-50"
           >
-            💾 Save Changes
+            {saving ? 'Saving...' : '💾 Save Changes'}
           </button>
         </div>
       </div>
 
-      {/* Success Message */}
       {saved && (
         <div className="fixed bottom-4 right-4 bg-[#00ff00] text-black px-5 py-2.5 rounded-lg font-semibold shadow-lg animate-pulse text-sm">
           ✓ Promo categories settings saved!

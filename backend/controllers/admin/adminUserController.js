@@ -1,9 +1,7 @@
 const User = require('../../models/User');
 const Order = require('../../models/Order');
 
-// @desc    Get all users (admin view) with search & pagination
-// @route   GET /api/admin/users
-// @access  Admin only
+
 const getAllUsers = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -82,9 +80,7 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// @desc    Get single user by ID
-// @route   GET /api/admin/users/:id
-// @access  Admin only
+
 const getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -122,9 +118,7 @@ const getUserById = async (req, res) => {
   }
 };
 
-// @desc    Block or unblock user
-// @route   PATCH /api/admin/users/:id/block
-// @access  Admin only
+
 const toggleUserBlock = async (req, res) => {
   try {
     const { isBlocked } = req.body;
@@ -152,9 +146,7 @@ const toggleUserBlock = async (req, res) => {
   }
 };
 
-// @desc    Update user role
-// @route   PATCH /api/admin/users/:id/role
-// @access  Admin only
+
 const updateUserRole = async (req, res) => {
   try {
     const { role } = req.body;
@@ -177,9 +169,7 @@ const updateUserRole = async (req, res) => {
   }
 };
 
-// @desc    Delete user
-// @route   DELETE /api/admin/users/:id
-// @access  Admin only
+
 const deleteUser = async (req, res) => {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -191,9 +181,7 @@ const deleteUser = async (req, res) => {
   }
 };
 
-// @desc    Search users
-// @route   GET /api/admin/users/search
-// @access  Admin only
+
 const searchUsers = async (req, res) => {
   try {
     const { q, field, page = 1, limit = 20 } = req.query;

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
+import api from '../../../Api/Axios'
 
 function InternationalKitsSettings() {
   const [settings, setSettings] = useState({
@@ -14,30 +15,54 @@ function InternationalKitsSettings() {
   })
   
   const [saved, setSaved] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [previewImage, setPreviewImage] = useState(null)
   const fileInputRef = useRef(null)
 
-  // Load settings from localStorage
+  // ✅ Load settings from BACKEND API
   useEffect(() => {
-    const savedSettings = localStorage.getItem('internationalKitsSettings')
-    if (savedSettings) {
-      const data = JSON.parse(savedSettings)
-      setSettings(data)
-      if (data.image) setPreviewImage(data.image)
-    }
+    fetchSettings()
   }, [])
 
-  // Handle image upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const base64String = reader.result
-        setPreviewImage(base64String)
-        setSettings({ ...settings, image: base64String })
+  const fetchSettings = async () => {
+    try {
+      setLoading(true)
+      const response = await api.get('/admin/home/sections/kits')
+      
+      if (response.data.success && response.data.section) {
+        setSettings(response.data.section)
+        if (response.data.section.image) setPreviewImage(response.data.section.image)
       }
-      reader.readAsDataURL(file)
+    } catch (error) {
+      console.error('Error fetching kits section:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Handle image upload to Cloudinary via backend
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      const response = await api.post('/admin/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      })
+      
+      if (response.data.success) {
+        const imageUrl = response.data.imageUrl
+        setPreviewImage(imageUrl)
+        setSettings({ ...settings, image: imageUrl })
+        showToast('Image uploaded successfully!', 'success')
+      }
+    } catch (error) {
+      console.error('Upload error:', error)
+      showToast('Failed to upload image', 'error')
     }
   }
 
@@ -48,11 +73,23 @@ function InternationalKitsSettings() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  // Save settings
-  const handleSave = () => {
-    localStorage.setItem('internationalKitsSettings', JSON.stringify(settings))
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+  // ✅ Save to BACKEND API
+  const handleSave = async () => {
+    try {
+      setSaving(true)
+      const response = await api.put('/admin/home/sections/kits', settings)
+      
+      if (response.data.success) {
+        setSaved(true)
+        setTimeout(() => setSaved(false), 2000)
+        showToast('Settings saved successfully!', 'success')
+      }
+    } catch (error) {
+      console.error('Save error:', error)
+      showToast('Failed to save settings', 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   // Reset to default
@@ -71,6 +108,24 @@ function InternationalKitsSettings() {
     setSettings(defaultSettings)
     setPreviewImage(null)
     if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const showToast = (message, type = 'success') => {
+    const toast = document.createElement('div')
+    toast.className = `fixed top-4 right-4 z-50 px-6 py-3 rounded-lg font-semibold shadow-lg animate-pulse ${
+      type === 'success' ? 'bg-[#00ff00] text-black' : 'bg-red-500 text-white'
+    }`
+    toast.textContent = message
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 3000)
+  }
+
+  if (loading) {
+    return (
+      <div className="max-w-4xl mx-auto flex justify-center items-center h-64">
+        <div className="text-[#00ff00] text-lg">Loading settings...</div>
+      </div>
+    )
   }
 
   return (
@@ -278,9 +333,10 @@ function InternationalKitsSettings() {
           
           <button
             onClick={handleSave}
-            className="px-6 py-2 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all transform hover:scale-105"
+            disabled={saving}
+            className="px-6 py-2 bg-[#00ff00] text-black font-semibold rounded-lg hover:bg-[#00ff00]/80 transition-all transform hover:scale-105 disabled:opacity-50"
           >
-            💾 Save Changes
+            {saving ? 'Saving...' : '💾 Save Changes'}
           </button>
         </div>
       </div>

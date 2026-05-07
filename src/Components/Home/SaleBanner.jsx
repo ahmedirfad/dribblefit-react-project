@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import api from '../../api/Axios'
 
 function SaleBanner() {
   const [settings, setSettings] = useState({
@@ -10,14 +11,30 @@ function SaleBanner() {
   const [timeLeft, setTimeLeft] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // Load settings from localStorage
+  // ✅ Load settings from BACKEND API
   useEffect(() => {
-    const savedSettings = localStorage.getItem('saleBannerSettings')
-    if (savedSettings) {
-      setSettings(JSON.parse(savedSettings))
-    }
-    setIsLoading(false)
+    fetchSaleBanner()
   }, [])
+
+  const fetchSaleBanner = async () => {
+    try {
+      setIsLoading(true)
+      const response = await api.get('/admin/home/sections/sale-banner')
+      
+      if (response.data.success && response.data.section) {
+        setSettings({
+          is_active: response.data.section.is_active,
+          end_date: response.data.section.end_date || '2026-07-11T23:59:59',
+          coupon_code: response.data.section.coupon_code || 'WORLDCUP2026',
+          message: response.data.section.message || 'WORLD CUP SEASON SALE • UP TO 40% OFF • ENDS JULY 11TH, 2026'
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching sale banner:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   function calculateTimeLeft() {
     if (!settings?.end_date) return null

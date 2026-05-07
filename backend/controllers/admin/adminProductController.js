@@ -1,8 +1,6 @@
 const Product = require('../../models/Product');
 
-// @desc    Get all products (admin view with pagination)
-// @route   GET /api/admin/products
-// @access  Admin only
+
 const getAllProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -43,9 +41,7 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-// @desc    Get single product by ID (admin view)
-// @route   GET /api/admin/products/:id
-// @access  Admin only
+
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findOne({ id: req.params.id });
@@ -58,15 +54,12 @@ const getProductById = async (req, res) => {
   }
 };
 
-// @desc    Create new product
-// @route   POST /api/admin/products
-// @access  Admin only
+
 const createProduct = async (req, res) => {
   try {
     const productId = req.body.id || Date.now().toString();
     
-    // imageUrl comes from Cloudinary upload
-    const imageUrl = req.body.image; // This will be the Cloudinary URL
+    const imageUrl = req.body.image; 
     
     const productData = {
       ...req.body,
@@ -90,9 +83,7 @@ const createProduct = async (req, res) => {
   }
 };
 
-// @desc    Update product
-// @route   PUT /api/admin/products/:id
-// @access  Admin only
+
 const updateProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndUpdate(
@@ -116,9 +107,7 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// @desc    Delete product
-// @route   DELETE /api/admin/products/:id
-// @access  Admin only
+
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({ id: req.params.id });
@@ -137,9 +126,7 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-// @desc    Get products by stock status
-// @route   GET /api/admin/products/stock/:status
-// @access  Admin only
+
 const getProductsByStock = async (req, res) => {
   try {
     const { status } = req.params;
