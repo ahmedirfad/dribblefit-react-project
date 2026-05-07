@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import api from '../../api/Axios'
+import api from '../../Api/Axios'
 
 function SaleBanner() {
   const [settings, setSettings] = useState({

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../../api/Axios'  // Adjust path to your api file
+import api from '../../Api/Axios'
 
 function HeroBanner() {
   const navigate = useNavigate()

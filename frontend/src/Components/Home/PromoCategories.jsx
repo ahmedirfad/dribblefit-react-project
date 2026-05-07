@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import api from '../../api/Axios'  // Adjust path as needed
+import api from '../../Api/Axios'  // Adjust path as needed
 
 function PromoCategories() {
   const navigate = useNavigate()

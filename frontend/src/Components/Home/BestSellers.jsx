@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../../Contexts/CartContext'
 import WishlistButton from '../Common/WishlistButton'
-import api from '../../api/Axios'  // Add this import
+import api from '../../Api/Axios'  // Add this import
 
 function BestSellers() {
   const navigate = useNavigate()
