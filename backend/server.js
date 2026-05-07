@@ -13,9 +13,9 @@ const app = express();
 // Middleware
 app.use(cors({
   origin: [
+    'https://dribblefit.vercel.app',
     'http://localhost:5173', 
-    'http://localhost:3000',
-    'https://dribblefit.vercel.app'
+    'http://localhost:3000'
   ],
   credentials: true
 }));
