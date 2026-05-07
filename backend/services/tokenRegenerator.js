@@ -2,8 +2,8 @@ const jwt = require("jsonwebtoken");
 
 const getCookieOptions = (maxAge) => ({
   httpOnly: true,
-  sameSite: "none",
-  secure: false,
+  sameSite: "None",
+  secure: true,
   path: "/",
   maxAge,
 });

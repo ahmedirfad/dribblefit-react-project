@@ -116,10 +116,8 @@ const loginUser = async (req, res) => {
       user.role
     );
 
-    const cookieOptions = getCookieOptions();
-
-    res.cookie("Access_Token", AccessToken, cookieOptions);
-    res.cookie("Refresh_Token", RefreshToken, cookieOptions);
+    res.cookie("Access_Token", AccessToken, getCookieOptions(30 * 60 * 1000));
+    res.cookie("Refresh_Token", RefreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     const userResponse = user.toObject();
     delete userResponse.password;
@@ -260,10 +258,8 @@ const verifyEmail = async (req, res) => {
       user.role
     );
 
-    const cookieOptions = getCookieOptions();
-
-    res.cookie("Access_Token", AccessToken, cookieOptions);
-    res.cookie("Refresh_Token", RefreshToken, cookieOptions);
+    res.cookie("Access_Token", AccessToken, getCookieOptions(30 * 60 * 1000));
+    res.cookie("Refresh_Token", RefreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.json({
       success: true,
