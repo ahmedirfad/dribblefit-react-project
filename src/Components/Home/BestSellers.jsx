@@ -27,7 +27,7 @@ function BestSellers() {
   const fetchBestSellersSettings = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/admin/home/sections/bestsellers')
+      const response = await api.get('/home/sections/bestsellers')
       
       if (response.data.success && response.data.section) {
         setSettings(response.data.section)

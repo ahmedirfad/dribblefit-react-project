@@ -19,7 +19,7 @@ function SaleBanner() {
   const fetchSaleBanner = async () => {
     try {
       setIsLoading(true)
-      const response = await api.get('/admin/home/sections/sale-banner')
+      const response = await api.get('/home/sections/sale-banner')
       
       if (response.data.success && response.data.section) {
         setSettings({

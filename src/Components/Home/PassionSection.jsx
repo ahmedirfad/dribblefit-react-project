@@ -25,7 +25,7 @@ function PassionSection() {
   const fetchPassionSection = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/admin/home/sections/passion')
+      const response = await api.get('/home/sections/passion')
       
       if (response.data.success && response.data.section) {
         setSettings(response.data.section)

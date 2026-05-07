@@ -24,7 +24,7 @@ function HeroBanner() {
   const fetchHeroBannerSettings = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/admin/home/sections/hero-banner')
+      const response = await api.get('/home/sections/hero-banner')
       
       if (response.data.success && response.data.section) {
         setSettings(response.data.section)

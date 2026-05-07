@@ -7,24 +7,25 @@ const getAllProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 9;
     const skip = (page - 1) * limit;
     const { category, search } = req.query;
-    
+
     let query = {};
-    
+
     if (category && category !== 'all') {
       query.category = category;
     }
-    
+
     if (search) {
       query.name = { $regex: search, $options: 'i' };
     }
-    
+
+    // ✅ FIX: Sort by createdAt AND id (unique combination)
     const products = await Product.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: 1 })  // Add _id to ensure unique ordering
       .skip(skip)
       .limit(limit);
-    
+
     const total = await Product.countDocuments(query);
-    
+
     res.json({
       success: true,
       products,
@@ -58,9 +59,9 @@ const getProductById = async (req, res) => {
 const createProduct = async (req, res) => {
   try {
     const productId = req.body.id || Date.now().toString();
-    
-    const imageUrl = req.body.image; 
-    
+
+    const imageUrl = req.body.image;
+
     const productData = {
       ...req.body,
       id: productId,
@@ -68,10 +69,10 @@ const createProduct = async (req, res) => {
       createdAt: new Date(),
       updatedAt: new Date()
     };
-    
+
     const product = new Product(productData);
     const savedProduct = await product.save();
-    
+
     res.status(201).json({
       success: true,
       message: 'Product created successfully',
@@ -91,11 +92,11 @@ const updateProduct = async (req, res) => {
       { ...req.body, updatedAt: new Date() },
       { new: true, runValidators: true }
     );
-    
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    
+
     res.json({
       success: true,
       message: 'Product updated successfully',
@@ -111,11 +112,11 @@ const updateProduct = async (req, res) => {
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findOneAndDelete({ id: req.params.id });
-    
+
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
-    
+
     res.json({
       success: true,
       message: 'Product deleted successfully'
@@ -131,15 +132,15 @@ const getProductsByStock = async (req, res) => {
   try {
     const { status } = req.params;
     let query = {};
-    
+
     if (status === 'outofstock') {
       query.inStock = false;
     } else if (status === 'instock') {
       query.inStock = true;
     }
-    
+
     const products = await Product.find(query).sort({ createdAt: -1 });
-    
+
     res.json({
       success: true,
       products,

@@ -21,6 +21,7 @@ app.use(cookieParser());
 
 // Serve static images from public folder
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
+
 // Routes
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/products', require('./routes/productRoutes'));
@@ -31,6 +32,10 @@ app.use('/api/contact', require('./routes/contactRoutes'));
 app.use('/api/returns', require('./routes/returnRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/admin', require('./routes/adminHomeRoutes'));
+
+// ✅ ADD THIS - Public home routes for customers (NO authentication needed)
+app.use('/api/home', require('./routes/homeRoutes'));
+
 app.use('/api/payments', require('./routes/paymentRoutes'));
 
 // Test route

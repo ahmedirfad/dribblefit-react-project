@@ -22,7 +22,7 @@ function InternationalKits() {
     const fetchSettings = async () => {
       try {
         setLoading(true)
-        const response = await api.get('/admin/home/sections/kits')
+        const response = await api.get('/home/sections/kits')
         
         if (response.data.success && response.data.section) {
           setSettings(response.data.section)

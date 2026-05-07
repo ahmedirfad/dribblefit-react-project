@@ -25,7 +25,7 @@ function MexicoDeOro() {
   const fetchVideoSection = async () => {
     try {
       setLoading(true)
-      const response = await api.get('/admin/home/sections/video')
+      const response = await api.get('/home/sections/video')
       if (response.data.success && response.data.section) {
         setSettings(response.data.section)
       }

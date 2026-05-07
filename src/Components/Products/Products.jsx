@@ -10,7 +10,7 @@ function Products() {
   const [loading, setLoading] = useState(true)
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [searchTerm, setSearchTerm] = useState('')
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('') // ✅ New state for debounced search
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalProducts, setTotalProducts] = useState(0)
@@ -29,12 +29,19 @@ function Products() {
     'anthem-jackets'
   ]
 
-  // ✅ Debounce search term - waits 500ms after user stops typing
+  // ✅ FIX: Set selectedCategory from URL IMMEDIATELY (before first render)
+  // This runs before the first fetchProducts call
+  const initialCategory = urlCategory && categories.includes(urlCategory) ? urlCategory : 'all'
+  const [selectedCategoryState, setSelectedCategoryState] = useState(initialCategory)
+
+  // Use the state for fetching
+  const activeCategory = selectedCategoryState
+
+  // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm)
-    }, 500) // 500ms delay
-
+    }, 500)
     return () => clearTimeout(timer)
   }, [searchTerm])
 
@@ -54,11 +61,11 @@ function Products() {
       setLoading(true)
       let url = `/products?page=${currentPage}&limit=${itemsPerPage}`
       
-      if (selectedCategory !== 'all') {
-        url += `&category=${selectedCategory}`
+      if (activeCategory !== 'all') {
+        url += `&category=${activeCategory}`
       }
       
-      if (debouncedSearchTerm.trim()) {  // ✅ Use debounced value
+      if (debouncedSearchTerm.trim()) {
         url += `&search=${encodeURIComponent(debouncedSearchTerm)}`
       }
       
@@ -78,12 +85,12 @@ function Products() {
 
   const handleSearch = (e) => {
     const value = e.target.value
-    setSearchTerm(value)  // This updates immediately for UI
-    setCurrentPage(1)     // Reset to first page on new search
+    setSearchTerm(value)
+    setCurrentPage(1)
   }
 
   const handleCategoryChange = (e) => {
-    setSelectedCategory(e.target.value)
+    setSelectedCategoryState(e.target.value)
     setCurrentPage(1)
     setSearchTerm('')
     setDebouncedSearchTerm('')
@@ -125,10 +132,10 @@ function Products() {
     return pageNumbers
   }
 
-  // ✅ Fetch when debouncedSearchTerm changes (not on every keystroke)
+  // ✅ Update selectedCategoryState when URL changes (for navigation between pages)
   useEffect(() => {
     if (urlCategory && categories.includes(urlCategory)) {
-      setSelectedCategory(urlCategory)
+      setSelectedCategoryState(urlCategory)
     }
     if (urlSearch) {
       setSearchTerm(urlSearch)
@@ -136,9 +143,10 @@ function Products() {
     }
   }, [urlCategory, urlSearch])
 
+  // ✅ Fetch products when dependencies change
   useEffect(() => {
     fetchProducts()
-  }, [currentPage, selectedCategory, debouncedSearchTerm])  // ✅ Use debouncedSearchTerm
+  }, [currentPage, activeCategory, debouncedSearchTerm])
 
   const getImageUrl = (imagePath) => {
     if (!imagePath) return ''
@@ -193,7 +201,7 @@ function Products() {
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="flex-1">
             <select
-              value={selectedCategory}
+              value={activeCategory}
               onChange={handleCategoryChange}
               className="w-full bg-[#1a1a1a] border border-gray-700 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-[#00ff00]"
             >
@@ -233,7 +241,7 @@ function Products() {
         <div className="text-gray-400 mb-6">
           Showing {products.length} of {totalProducts} products
           {debouncedSearchTerm && ` matching "${debouncedSearchTerm}"`}
-          {selectedCategory !== 'all' && ` in ${getCategoryDisplayName(selectedCategory)}`}
+          {activeCategory !== 'all' && ` in ${getCategoryDisplayName(activeCategory)}`}
           {totalPages > 1 && ` (Page ${currentPage} of ${totalPages})`}
         </div>
 
@@ -242,11 +250,11 @@ function Products() {
             <div className="text-gray-400 text-lg mb-4">
               No products found
               {debouncedSearchTerm && ` for "${debouncedSearchTerm}"`}
-              {selectedCategory !== 'all' && ` in ${getCategoryDisplayName(selectedCategory)}`}
+              {activeCategory !== 'all' && ` in ${getCategoryDisplayName(activeCategory)}`}
             </div>
             <button
               onClick={() => {
-                setSelectedCategory('all')
+                setSelectedCategoryState('all')
                 setSearchTerm('')
                 setDebouncedSearchTerm('')
                 setCurrentPage(1)
