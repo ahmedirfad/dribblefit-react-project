@@ -11,7 +11,7 @@ function Footer() {
           <div className="lg:col-span-1">
             <Link to="/" className="inline-block mb-6">
               <img 
-                src="public\images\DRIBBLEFIT.PNG" 
+                src="/images/DRIBBLEFIT.PNG" 
                 alt="DRIBBLEFIT" 
                 className="h-8"
               />

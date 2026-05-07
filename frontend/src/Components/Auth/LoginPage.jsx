@@ -54,7 +54,7 @@ function LoginPage() {
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img
-          src="public\images\loginimage.jpeg"
+          src="/images/loginimage.jpeg"
           alt="Background"
           className="w-full h-full object-cover"
           loading="lazy"
@@ -69,7 +69,7 @@ function LoginPage() {
 
         <div className="text-center mb-6">
           <img
-            src="public\images\dflogo.PNG"
+            src="/images/dflogo.PNG"
             alt="DRIBBLEFIT"
             className="mx-auto"
           />
