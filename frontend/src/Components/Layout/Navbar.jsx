@@ -146,7 +146,7 @@ function Navbar() {
             <div className="flex items-center gap-6">
               <Link to="/home" className="flex-shrink-0">
                 <img 
-                  src="/src/assets/DRIBBLEFIT.PNG" 
+                  src="public\images\DRIBBLEFIT.PNG" 
                   alt="DRIBBLEFIT" 
                   className="h-8"
                 />

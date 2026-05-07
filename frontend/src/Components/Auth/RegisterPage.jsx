@@ -65,7 +65,7 @@ function RegisterPage() {
       {/* Background */}
       <div className="absolute inset-0 z-0">
         <img 
-          src="src/assets/download (3) (1).jpeg" 
+          src="public\images\registerimage.jpeg" 
           alt="Background" 
           className="w-full h-full object-cover"
         />
@@ -77,7 +77,7 @@ function RegisterPage() {
         
         <div className="text-center mb-6">
           <img 
-            src="src/assets/DRIBBLEFIT.PNG" 
+            src="public\images\DRIBBLEFIT.PNG"
             alt="DRIBBLEFIT" 
             className="mx-auto"
           />
