@@ -13,11 +13,6 @@ redisClient.on('connect', () => console.log('✅ Redis Connected'));
 
 (async () => {
   await redisClient.connect();
-
-  await redisClient.set("test", "working");
-  const val = await redisClient.get("test");
-  console.log(val);
-
 })();
 
 module.exports = redisClient;
